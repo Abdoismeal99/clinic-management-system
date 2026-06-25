@@ -53,11 +53,39 @@
   --color-sidebar-primary: oklch(0.62 0.15 240);
 }
 
+/* ===== DARK MODE OVERRIDES ===== */
+.dark {
+  --color-background: oklch(0.13 0.02 240);
+  --color-foreground: oklch(0.93 0.01 240);
+  --color-card: oklch(0.17 0.02 240);
+  --color-card-foreground: oklch(0.93 0.01 240);
+  --color-popover: oklch(0.17 0.02 240);
+  --color-popover-foreground: oklch(0.93 0.01 240);
+  --color-muted: oklch(0.22 0.02 240);
+  --color-muted-foreground: oklch(0.60 0.02 240);
+  --color-accent: oklch(0.25 0.04 240);
+  --color-accent-foreground: oklch(0.90 0.02 240);
+  --color-border: oklch(0.28 0.03 240);
+  --color-input: oklch(0.28 0.03 240);
+  --color-primary: oklch(0.60 0.15 240);
+  --color-primary-foreground: oklch(0.99 0 0);
+  --color-destructive: oklch(0.62 0.22 25);
+  --color-destructive-foreground: oklch(0.99 0 0);
+  --color-success: oklch(0.58 0.15 150);
+  --color-warning: oklch(0.75 0.16 70);
+  --color-sidebar: oklch(0.15 0.03 240);
+  --color-sidebar-foreground: oklch(0.88 0.02 240);
+  --color-sidebar-muted: oklch(0.22 0.04 240);
+  --color-sidebar-border: oklch(0.22 0.04 240);
+  --color-sidebar-accent: oklch(0.28 0.06 240);
+  --color-sidebar-accent-foreground: oklch(0.99 0 0);
+  --color-sidebar-primary: oklch(0.62 0.15 240);
+}
+
 @layer base {
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";

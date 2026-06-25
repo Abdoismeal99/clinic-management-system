@@ -24,6 +24,7 @@ import { format, differenceInYears } from "date-fns";
 import { STATUS_CLASSES, STATUS_LABELS, FILE_CATEGORY_LABELS, BLOOD_TYPES, canManageVisits, canDelete } from "@/lib/types";
 import type { PatientStatus } from "@/lib/types";
 import ImageAnnotator from "@/components/ImageAnnotator";
+import PatientPdfExport from "@/components/PatientPdfExport";
 
 export default function PatientProfile() {
   const { id } = useParams<{ id: string }>();
@@ -143,6 +144,7 @@ export default function PatientProfile() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" className="gap-2 h-8" onClick={handlePrint}><Printer className="w-4 h-4" /> Print</Button>
+          <PatientPdfExport patientId={patientId} patientName={patient.fullName} />
           {canEdit && <Button size="sm" className="gap-2 h-8" onClick={openEdit}><Edit className="w-4 h-4" /> Edit</Button>}
         </div>
       </div>

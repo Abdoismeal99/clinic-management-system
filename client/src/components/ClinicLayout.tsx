@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import {
   Activity, Archive, BarChart3, Calendar, ChevronLeft, ChevronRight,
   ClipboardList, FileText, Home, LogOut, Menu, Pill, Search, Settings,
-  Stethoscope, Users, X, Bell
+  Stethoscope, Users, X, Bell, Moon, Sun
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -17,6 +17,7 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const NAV_ITEMS = [
   { label: "Dashboard", icon: Home, href: "/" },
@@ -44,6 +45,7 @@ export default function ClinicLayout({ children }: ClinicLayoutProps) {
   const [location] = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   if (loading) {
     return (
@@ -183,6 +185,31 @@ export default function ClinicLayout({ children }: ClinicLayoutProps) {
           </>
         )}
       </nav>
+
+      {/* Dark Mode Toggle */}
+      <div className={cn("px-2 py-1.5", collapsed && "flex justify-center")}>
+        {collapsed ? (
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <button
+                onClick={toggleTheme}
+                className="flex items-center justify-center h-9 w-9 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-muted hover:text-sidebar-foreground transition-colors mx-auto"
+              >
+                {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">{theme === "dark" ? "Light Mode" : "Dark Mode"}</TooltipContent>
+          </Tooltip>
+        ) : (
+          <button
+            onClick={toggleTheme}
+            className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-muted hover:text-sidebar-foreground transition-colors"
+          >
+            {theme === "dark" ? <Sun className="w-4 h-4 flex-shrink-0" /> : <Moon className="w-4 h-4 flex-shrink-0" />}
+            <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+          </button>
+        )}
+      </div>
 
       {/* User Profile */}
       <div className={cn("border-t border-sidebar-border p-3", collapsed && "flex justify-center")}>

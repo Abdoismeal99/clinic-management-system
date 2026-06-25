@@ -4,6 +4,7 @@ import { protectedProcedure, router } from "../_core/trpc";
 import {
   createPatient, generatePatientId, getPatientById, getPatients,
   restorePatient, softDeletePatient, updatePatient, logActivity,
+  getVisitsByPatient, getPrescriptionsByPatient, getFilesByPatient, getAppointments,
 } from "../db";
 
 const patientInput = z.object({
@@ -125,5 +126,25 @@ export const patientsRouter = router({
         description: `Patient restored from archive`,
       });
       return { success: true };
+    }),
+
+  exportData: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      const patient = await getPatientById(input.id);
+      if (!patient) throw new TRPCError({ code: "NOT_FOUND", message: "Patient not found" });
+      const [visits, prescriptions, files, appointmentsResult] = await Promise.all([
+        getVisitsByPatient(input.id),
+        getPrescriptionsByPatient(input.id),
+        getFilesByPatient(input.id),
+        getAppointments({ patientId: input.id, limit: 100 }),
+      ]);
+      return {
+        patient,
+        visits,
+        prescriptions,
+        files,
+        appointments: appointmentsResult.data,
+      };
     }),
 });

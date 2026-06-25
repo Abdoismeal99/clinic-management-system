@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { Download, FileText, TrendingUp, Users, Activity, Stethoscope, Printer } from "lucide-react";
+import { Download, FileText, TrendingUp, Users, Activity, Stethoscope, Printer, Sparkles, Loader2, RefreshCw, AlertTriangle, CheckCircle2, Brain } from "lucide-react";
+import { Streamdown } from 'streamdown';
 
 const COLORS = ["#2563eb", "#16a34a", "#d97706", "#dc2626", "#7c3aed", "#0891b2", "#be185d", "#065f46"];
 
@@ -30,6 +31,11 @@ export default function Reports() {
   const { data: doctorStats } = trpc.reports.doctorStats.useQuery();
 
   const isLoading = loadingMP || loadingMV;
+  const [aiReport, setAiReport] = useState<{ report: string; generatedAt: string; dataSnapshot: any } | null>(null);
+  const aiMutation = trpc.reports.aiAnalysis.useMutation({
+    onSuccess: (data) => setAiReport(data),
+    onError: (e) => { import('sonner').then(({ toast }) => toast.error('AI analysis failed: ' + e.message)); },
+  });
 
   // Summary stats
   const totalPatients = monthlyPatients?.reduce((s: number, m: any) => s + (m.count ?? 0), 0) ?? 0;
@@ -74,6 +80,7 @@ export default function Reports() {
           <TabsTrigger value="visits" className="text-sm">Visits</TabsTrigger>
           <TabsTrigger value="diagnoses" className="text-sm">Diagnoses</TabsTrigger>
           <TabsTrigger value="doctors" className="text-sm">Doctors</TabsTrigger>
+          <TabsTrigger value="ai" className="text-sm gap-1.5"><Sparkles className="w-3.5 h-3.5" />AI Analysis</TabsTrigger>
         </TabsList>
 
         {/* Monthly Patients */}
@@ -267,6 +274,152 @@ export default function Reports() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* AI Analysis Tab */}
+        <TabsContent value="ai" className="mt-4">
+          <div className="space-y-4">
+            {/* Intro Card */}
+            <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Brain className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base">AI Medical Intelligence Report</CardTitle>
+                    <CardDescription className="text-xs mt-0.5">Powered by advanced AI — analyzes all clinic data to generate actionable medical insights</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                  {[
+                    { label: "Disease Patterns", icon: <Stethoscope className="w-4 h-4 text-blue-500" />, desc: "Top diagnoses & trends" },
+                    { label: "Risk Assessment", icon: <AlertTriangle className="w-4 h-4 text-amber-500" />, desc: "Critical patient flags" },
+                    { label: "Operational Insights", icon: <Activity className="w-4 h-4 text-green-500" />, desc: "Workload & efficiency" },
+                    { label: "Recommendations", icon: <CheckCircle2 className="w-4 h-4 text-purple-500" />, desc: "Actionable next steps" },
+                  ].map((item) => (
+                    <div key={item.label} className="flex items-start gap-2 p-3 rounded-lg bg-background border">
+                      {item.icon}
+                      <div>
+                        <p className="text-xs font-semibold">{item.label}</p>
+                        <p className="text-xs text-muted-foreground">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center gap-3">
+                  <Button
+                    onClick={() => aiMutation.mutate()}
+                    disabled={aiMutation.isPending}
+                    className="gap-2"
+                  >
+                    {aiMutation.isPending ? (
+                      <><Loader2 className="w-4 h-4 animate-spin" />Analyzing clinic data...</>
+                    ) : aiReport ? (
+                      <><RefreshCw className="w-4 h-4" />Regenerate Report</>
+                    ) : (
+                      <><Sparkles className="w-4 h-4" />Generate AI Report</>
+                    )}
+                  </Button>
+                  {aiReport && (
+                    <p className="text-xs text-muted-foreground">
+                      Last generated: {new Date(aiReport.generatedAt).toLocaleString()}
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Loading State */}
+            {aiMutation.isPending && (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Brain className="w-8 h-8 text-primary animate-pulse" />
+                    </div>
+                    <div>
+                      <p className="font-semibold">Analyzing your clinic data...</p>
+                      <p className="text-sm text-muted-foreground mt-1">The AI is reviewing patient records, diagnoses, visit patterns, and operational metrics.</p>
+                    </div>
+                    <div className="flex gap-1.5">
+                      {[0, 1, 2].map((i) => (
+                        <div key={i} className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* AI Report Result */}
+            {aiReport && !aiMutation.isPending && (
+              <>
+                {/* Data Snapshot */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                  {[
+                    { label: "Total Patients", value: aiReport.dataSnapshot.totalPatients },
+                    { label: "Total Visits", value: aiReport.dataSnapshot.totalVisits },
+                    { label: "Critical", value: aiReport.dataSnapshot.criticalCount, alert: aiReport.dataSnapshot.criticalCount > 0 },
+                    { label: "Follow-up", value: aiReport.dataSnapshot.followUpCount },
+                    { label: "Top Diagnosis", value: aiReport.dataSnapshot.topDiagnosis },
+                    { label: "Top Diag. Cases", value: aiReport.dataSnapshot.topDiagnosisCount },
+                  ].map((item) => (
+                    <Card key={item.label} className={(item as any).alert ? "border-red-200 bg-red-50" : ""}>
+                      <CardContent className="p-3 text-center">
+                        <p className={`text-xl font-bold ${(item as any).alert ? "text-red-600" : "text-primary"}`}>{item.value}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{item.label}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Report Content */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-primary" />
+                        AI Medical Intelligence Report
+                      </CardTitle>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2 h-8"
+                        onClick={() => {
+                          const blob = new Blob([aiReport.report], { type: 'text/plain' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url; a.download = `ai-clinic-report-${new Date().toISOString().split('T')[0]}.txt`; a.click();
+                          URL.revokeObjectURL(url);
+                        }}
+                      >
+                        <Download className="w-3.5 h-3.5" /> Export
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="prose prose-sm max-w-none dark:prose-invert">
+                      <Streamdown>{aiReport.report}</Streamdown>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+
+            {/* Empty state */}
+            {!aiReport && !aiMutation.isPending && (
+              <Card className="border-dashed">
+                <CardContent className="p-12 text-center">
+                  <Brain className="w-12 h-12 mx-auto mb-4 text-muted-foreground/30" />
+                  <p className="font-medium text-muted-foreground">No AI report generated yet</p>
+                  <p className="text-sm text-muted-foreground/70 mt-1">Click "Generate AI Report" above to analyze your clinic data</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </TabsContent>
       </Tabs>
     </div>

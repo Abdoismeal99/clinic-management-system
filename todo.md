@@ -109,3 +109,11 @@
 - [x] Pagination components
 - [x] Responsive tables
 - [x] Mobile responsive layout
+
+## New Features (Round 2)
+
+- [ ] Dark Mode toggle in sidebar with localStorage persistence
+- [ ] Dark mode CSS variables for all semantic colors
+- [ ] Full patient PDF export via server-side HTML generation (patient info + visits + prescriptions + files list)
+- [ ] AI reports backend router: diagnosis analysis, patient insights, trend summary using LLM
+- [ ] AI Reports page section with streaming insights and charts
