@@ -240,3 +240,54 @@ export const settings = mysqlTable("settings", {
 });
 
 export type Setting = typeof settings.$inferSelect;
+
+// ─── Clinic Doctors (standalone list managed in Settings) ─────────────────────────────────────────────────
+export const clinicDoctors = mysqlTable("clinicDoctors", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 256 }).notNull(),
+  specialty: varchar("specialty", { length: 128 }),
+  phone: varchar("phone", { length: 32 }),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ClinicDoctor = typeof clinicDoctors.$inferSelect;
+export type InsertClinicDoctor = typeof clinicDoctors.$inferInsert;
+
+// ─── Surgery Types ───────────────────────────────────────────────────────────────────────────
+export const surgeryTypes = mysqlTable("surgeryTypes", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 256 }).notNull(),
+  description: text("description"),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SurgeryType = typeof surgeryTypes.$inferSelect;
+export type InsertSurgeryType = typeof surgeryTypes.$inferInsert;
+
+// ─── Surgeries ─────────────────────────────────────────────────────────────────────────────────────
+export const surgeries = mysqlTable("surgeries", {
+  id: int("id").autoincrement().primaryKey(),
+  patientId: int("patientId").notNull(),
+  doctorId: int("doctorId").notNull(), // references clinicDoctors.id
+  surgeryTypeId: int("surgeryTypeId").notNull(), // references surgeryTypes.id
+  surgeryDate: timestamp("surgeryDate").notNull(),
+  notes: text("notes"),
+  status: mysqlEnum("status", ["scheduled", "completed", "cancelled", "postponed"]).default("scheduled").notNull(),
+  isDeleted: boolean("isDeleted").default(false).notNull(),
+  createdBy: int("createdBy").notNull(),
+  updatedBy: int("updatedBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => [
+  index("idx_surgeries_patientId").on(t.patientId),
+  index("idx_surgeries_doctorId").on(t.doctorId),
+  index("idx_surgeries_date").on(t.surgeryDate),
+  index("idx_surgeries_status").on(t.status),
+]);
+
+export type Surgery = typeof surgeries.$inferSelect;
+export type InsertSurgery = typeof surgeries.$inferInsert;

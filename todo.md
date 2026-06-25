@@ -76,7 +76,7 @@
 - [x] File preview (images and PDFs)
 - [x] Download with presigned URL
 - [x] Delete file
-- [x] Image annotation tool (pen, highlight, circle, arrow, text, undo, clear, download) (draw, highlight, circle, arrow, notes) — future enhancement
+- [x] Image annotation tool (pen, highlight, circle, arrow, text, undo, clear, download)
 
 ## Frontend - Search & Filters
 - [x] Global search bar in header
@@ -111,18 +111,25 @@
 - [x] Mobile responsive layout
 
 ## New Features (Round 2)
-
 - [x] Dark Mode toggle in sidebar with localStorage persistence
 - [x] Dark mode CSS variables for all semantic colors
-- [x] Full patient PDF export via browser print (patient info + visits + prescriptions + files list + appointments)
-- [x] AI reports backend router: diagnosis analysis, patient insights, trend summary using LLM
-- [x] AI Reports page section with AI Analysis tab, data snapshot cards, and markdown-rendered report
+- [x] Full patient PDF export via browser print
+- [x] AI reports backend router using LLM
+- [x] AI Reports page section with AI Analysis tab
 
 ## New Features (Round 3)
+- [x] Fix dark mode toggle
+- [x] Custom patient tags with filter
+- [x] Treatment name field in prescriptions
+- [x] Full Arabic UI translation + RTL + Cairo font
 
-- [x] Fix dark mode toggle (moved CSS vars from @theme inline to :root/.dark blocks)
-- [x] Custom patient tags: tag input in add/edit patient form (TagInput component)
-- [x] Patient tags filter in patients list page
-- [x] DB: add tags column to patients table (VARCHAR 500)
-- [x] Add treatment name field to prescriptions (treatmentName column + form field)
-- [x] Full Arabic UI translation (all pages, navigation, forms, messages) + RTL + Cairo font
+## العمليات الجراحية (Round 4)
+- [x] إضافة جدول surgeryTypes في قاعدة البيانات
+- [x] إضافة جدول surgeries في قاعدة البيانات (مريض، طبيب، نوع العملية، الموعد، ملاحظات، الحالة)
+- [x] إضافة جدول doctors في الإعدادات
+- [x] إضافة router للعمليات الجراحية (CRUD كامل)
+- [x] إضافة قسم "أنواع العمليات" في صفحة الإعدادات
+- [x] إضافة قسم "الأطباء" في صفحة الإعدادات مع dropdown
+- [x] بناء صفحة "العمليات الجراحية" كاملة مع نموذج الإضافة
+- [x] عرض العمليات في صفحة المواعيد
+- [x] إضافة رابط "العمليات" في الشريط الجانبي

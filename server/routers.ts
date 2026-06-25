@@ -12,6 +12,7 @@ import { reportsRouter } from "./routers/reports";
 import { activityRouter } from "./routers/activity";
 import { settingsRouter, usersRouter, diagnosesRouter } from "./routers/settings";
 import { seedRouter } from "./routers/seed";
+import { surgeriesRouter, surgeryTypesRouter, clinicDoctorsRouter } from "./routers/surgeries";
 import {
   getPatientCount, getTodayAppointmentCount, getRecentPatients,
   getRecentVisits, getFollowUpPatients, getMonthlyPatientStats,
@@ -59,6 +60,9 @@ export const appRouter = router({
   users: usersRouter,
   diagnoses: diagnosesRouter,
   seed: seedRouter,
+  surgeries: surgeriesRouter,
+  surgeryTypes: surgeryTypesRouter,
+  clinicDoctors: clinicDoctorsRouter,
 });
 
 export type AppRouter = typeof appRouter;

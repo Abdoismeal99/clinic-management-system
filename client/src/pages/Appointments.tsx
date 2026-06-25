@@ -11,12 +11,86 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Calendar, List, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Clock } from "lucide-react";
+import { Calendar, List, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Clock, Scissors, User } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths, getDay } from "date-fns";
 import { APPT_STATUS_CLASSES, APPT_STATUS_LABELS } from "@/lib/types";
 
 const EMPTY_FORM = { patientId: 0, doctorId: 0, appointmentDate: new Date().toISOString().slice(0, 16), duration: 30, reason: "", notes: "", status: "pending" as const };
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+const SURGERY_STATUS_COLORS: Record<string, string> = {
+  scheduled: "bg-blue-100 text-blue-700 border-blue-200",
+  completed: "bg-green-100 text-green-700 border-green-200",
+  cancelled: "bg-red-100 text-red-700 border-red-200",
+  postponed: "bg-amber-100 text-amber-700 border-amber-200",
+};
+const SURGERY_STATUS_LABELS: Record<string, string> = {
+  scheduled: "مجدولة", completed: "مكتملة", cancelled: "ملغاة", postponed: "مؤجلة",
+};
+
+function UpcomingSurgeries() {
+  const { data: surgeries, isLoading } = trpc.surgeries.upcoming.useQuery({ days: 60 });
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Scissors className="w-5 h-5 text-primary" /> العمليات الجراحية القادمة
+        </h2>
+        <a href="/surgeries" className="text-sm text-primary hover:underline">عرض الكل</a>
+      </div>
+      {isLoading ? (
+        <div className="space-y-2">{[1,2,3].map(i => <Skeleton key={i} className="h-16" />)}</div>
+      ) : (surgeries ?? []).length === 0 ? (
+        <Card><CardContent className="py-10 text-center text-muted-foreground">
+          <Scissors className="w-10 h-10 mx-auto mb-2 opacity-20" />
+          <p className="text-sm">لا توجد عمليات قادمة خلال الستين يومًا القادمة</p>
+        </CardContent></Card>
+      ) : (
+        <Card><CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead><tr className="border-b border-border bg-muted/40">
+                <th className="text-right px-4 py-3 font-medium text-muted-foreground">المريض</th>
+                <th className="text-right px-4 py-3 font-medium text-muted-foreground">نوع العملية</th>
+                <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">الطبيب</th>
+                <th className="text-right px-4 py-3 font-medium text-muted-foreground">الموعد</th>
+                <th className="text-right px-4 py-3 font-medium text-muted-foreground">الحالة</th>
+              </tr></thead>
+              <tbody className="divide-y divide-border">
+                {(surgeries ?? []).map((s: any) => (
+                  <tr key={s.id} className="hover:bg-muted/30 transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <User className="w-3.5 h-3.5 text-primary" />
+                        </div>
+                        <span className="font-medium">{s.patientName ?? '—'}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 font-medium text-blue-700">{s.surgeryTypeName ?? '—'}</td>
+                    <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{s.doctorName ?? '—'}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>{s.surgeryDate ? new Date(s.surgeryDate).toLocaleString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${SURGERY_STATUS_COLORS[s.status] ?? ''}`}>
+                        {SURGERY_STATUS_LABELS[s.status] ?? s.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent></Card>
+      )}
+    </div>
+  );
+}
 
 export default function Appointments() {
   const { user } = useAuth();
@@ -169,6 +243,10 @@ export default function Appointments() {
       </CardContent></Card>
 
       </> }
+
+      {/* ─── Upcoming Surgeries Section ─── */}
+      <UpcomingSurgeries />
+
       <Dialog open={showForm} onOpenChange={(v) => { setShowForm(v); if (!v) setEditId(null); }}>
         <DialogContent aria-describedby={undefined} className="max-w-lg">
           <DialogHeader><DialogTitle>{editId ? "Edit Appointment" : "Schedule Appointment"}</DialogTitle></DialogHeader>

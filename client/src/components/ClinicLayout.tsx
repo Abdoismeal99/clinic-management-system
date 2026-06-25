@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import {
   Activity, Archive, BarChart3, Calendar, ChevronLeft, ChevronRight,
   ClipboardList, FileText, Home, LogOut, Menu, Pill, Search, Settings,
-  Stethoscope, Users, X, Bell, Moon, Sun
+  Stethoscope, Scissors, Users, X, Bell, Moon, Sun
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -25,6 +25,7 @@ const NAV_ITEMS = [
   { label: "الزيارات", icon: Stethoscope, href: "/visits" },
   { label: "الوصفات", icon: Pill, href: "/prescriptions" },
   { label: "المواعيد", icon: Calendar, href: "/appointments" },
+  { label: "العمليات الجراحية", icon: Scissors, href: "/surgeries" },
   { label: "الملفات", icon: FileText, href: "/files" },
   { label: "بحث", icon: Search, href: "/search" },
   { label: "التقارير", icon: BarChart3, href: "/reports" },
