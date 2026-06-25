@@ -13,6 +13,7 @@ import { activityRouter } from "./routers/activity";
 import { settingsRouter, usersRouter, diagnosesRouter } from "./routers/settings";
 import { seedRouter } from "./routers/seed";
 import { surgeriesRouter, surgeryTypesRouter, clinicDoctorsRouter } from "./routers/surgeries";
+import { aiAssistantRouter } from "./routers/aiAssistant";
 import {
   getPatientCount, getTodayAppointmentCount, getRecentPatients,
   getRecentVisits, getFollowUpPatients, getMonthlyPatientStats,
@@ -63,6 +64,7 @@ export const appRouter = router({
   surgeries: surgeriesRouter,
   surgeryTypes: surgeryTypesRouter,
   clinicDoctors: clinicDoctorsRouter,
+  aiAssistant: aiAssistantRouter,
 });
 
 export type AppRouter = typeof appRouter;

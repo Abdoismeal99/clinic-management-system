@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import {
   Activity, Archive, BarChart3, Calendar, ChevronLeft, ChevronRight,
   ClipboardList, FileText, Home, LogOut, Menu, Pill, Search, Settings,
-  Stethoscope, Scissors, Users, X, Bell, Moon, Sun
+  Stethoscope, Scissors, Sparkles, Users, X, Bell, Moon, Sun
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -30,6 +30,7 @@ const NAV_ITEMS = [
   { label: "بحث", icon: Search, href: "/search" },
   { label: "التقارير", icon: BarChart3, href: "/reports" },
   { label: "سجل النشاط", icon: Activity, href: "/activity" },
+  { label: "المساعد الذكي", icon: Sparkles, href: "/ai-assistant" },
 ];
 
 const ADMIN_NAV_ITEMS = [

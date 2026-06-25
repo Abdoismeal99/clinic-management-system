@@ -22,6 +22,7 @@ import Settings from "./pages/Settings";
 import Archive from "./pages/Archive";
 import Users from "./pages/Users";
 import Surgeries from "./pages/Surgeries";
+import AIAssistant from "./pages/AIAssistant";
 
 function Router() {
   return (
@@ -42,6 +43,7 @@ function Router() {
         <Route path="/settings" component={Settings} />
         <Route path="/users" component={Users} />
         <Route path="/surgeries" component={Surgeries} />
+        <Route path="/ai-assistant" component={AIAssistant} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>
