@@ -109,11 +109,27 @@ function SurgeryForm({
       </div>
 
       <div className="space-y-1.5">
-        <Label>موعد العملية *</Label>
+        <Label>تاريخ العملية *</Label>
         <Input
-          type="datetime-local"
-          value={form.surgeryDate}
-          onChange={(e) => setForm((f) => ({ ...f, surgeryDate: e.target.value }))}
+          type="date"
+          value={form.surgeryDate ? form.surgeryDate.slice(0, 10) : ""}
+          onChange={(e) => {
+            const datePart = e.target.value;
+            const timePart = form.surgeryDate?.slice(11, 16) || "08:00";
+            setForm((f) => ({ ...f, surgeryDate: datePart ? `${datePart}T${timePart}` : "" }));
+          }}
+        />
+      </div>
+      <div className="space-y-1.5">
+        <Label>وقت العملية *</Label>
+        <Input
+          type="time"
+          value={form.surgeryDate ? form.surgeryDate.slice(11, 16) : "08:00"}
+          onChange={(e) => {
+            const timePart = e.target.value;
+            const datePart = form.surgeryDate?.slice(0, 10) || "";
+            setForm((f) => ({ ...f, surgeryDate: datePart ? `${datePart}T${timePart}` : "" }));
+          }}
         />
       </div>
 
@@ -207,8 +223,9 @@ export default function Surgeries() {
   };
 
   const handleCreate = () => {
-    if (!form.patientId || !form.doctorId || !form.surgeryTypeId || !form.surgeryDate) {
-      toast.error("يرجى تعبئة الحقول المطلوبة: المريض، نوع العملية، الطبيب، والموعد");
+    const dateOnly = form.surgeryDate?.slice(0, 10) || "";
+    if (!form.patientId || !form.doctorId || !form.surgeryTypeId || !dateOnly) {
+      toast.error("يرجى تعبئة الحقول المطلوبة: المريض، نوع العملية، الطبيب، وتاريخ العملية");
       return;
     }
     createMutation.mutate({
