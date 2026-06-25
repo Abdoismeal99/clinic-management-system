@@ -37,8 +37,8 @@ export default function Surgeries() {
 
   const { data: surgeries, isLoading } = trpc.surgeries.list.useQuery();
   const { data: patients } = trpc.patients.list.useQuery({ page: 1, limit: 500 });
-  const { data: doctors } = trpc.clinicDoctors.list.useQuery();
-  const { data: surgeryTypes } = trpc.surgeryTypes.list.useQuery();
+  const { data: doctors } = trpc.clinicDoctors.listAll.useQuery();
+  const { data: surgeryTypes } = trpc.surgeryTypes.listAll.useQuery();
 
   const createMutation = trpc.surgeries.create.useMutation({
     onSuccess: () => {
