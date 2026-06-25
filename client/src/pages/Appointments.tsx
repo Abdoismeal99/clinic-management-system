@@ -49,7 +49,7 @@ export default function Appointments() {
   return (
     <div className="p-6 space-y-5 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold text-foreground">Appointments</h1><p className="text-sm text-muted-foreground mt-0.5">{data?.total ?? 0} total appointments</p></div>
+        <div><h1 className="text-2xl font-bold text-foreground">المواعيد</h1><p className="text-sm text-muted-foreground mt-0.5">{data?.total ?? 0} total appointments</p></div>
         <div className="flex items-center gap-2">
           <div className="flex rounded-lg border border-border overflow-hidden">
             <button onClick={() => setViewMode("list")} className={`px-3 py-1.5 text-sm flex items-center gap-1.5 transition-colors ${viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}><List className="w-3.5 h-3.5" /> List</button>
@@ -96,7 +96,7 @@ export default function Appointments() {
                       <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => openCreate(selectedDay)}><Plus className="w-3 h-3" /> Add</Button>
                     </div>
                     {selectedDayAppts.length === 0 ? (
-                      <div className="flex flex-col items-center py-8 text-center"><Clock className="w-8 h-8 text-muted-foreground/40 mb-2" /><p className="text-sm text-muted-foreground">No appointments</p></div>
+                      <div className="flex flex-col items-center py-8 text-center"><Clock className="w-8 h-8 text-muted-foreground/40 mb-2" /><p className="text-sm text-muted-foreground">لا توجد مواعيد</p></div>
                     ) : (
                       <div className="space-y-2">{selectedDayAppts.map((a: any) => (
                         <div key={a.id} className="p-3 rounded-lg border border-border bg-muted/20">
@@ -130,7 +130,7 @@ export default function Appointments() {
       <div className="flex gap-3">
         <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v === "all" ? "" : v); setPage(1); }}>
           <SelectTrigger className="w-40 h-9"><SelectValue placeholder="All Statuses" /></SelectTrigger>
-          <SelectContent><SelectItem value="all">All Statuses</SelectItem><SelectItem value="pending">Pending</SelectItem><SelectItem value="completed">Completed</SelectItem><SelectItem value="cancelled">Cancelled</SelectItem><SelectItem value="no-show">No Show</SelectItem></SelectContent>
+          <SelectContent><SelectItem value="all">All Statuses</SelectItem><SelectItem value="pending">قيد الانتظار</SelectItem><SelectItem value="completed">مكتمل</SelectItem><SelectItem value="cancelled">ملغى</SelectItem><SelectItem value="no-show">No Show</SelectItem></SelectContent>
         </Select>
       </div>
       <Card><CardContent className="p-0">
@@ -140,12 +140,12 @@ export default function Appointments() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead><tr className="border-b border-border bg-muted/40">
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Patient</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Doctor</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">المريض</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">الطبيب</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Date & Time</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Reason</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground">Actions</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">السبب</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">الحالة</th>
+                <th className="text-right px-4 py-3 font-medium text-muted-foreground">الإجراءات</th>
               </tr></thead>
               <tbody className="divide-y divide-border">
                 {data?.data?.map((a) => (
@@ -177,14 +177,14 @@ export default function Appointments() {
             <div className="sm:col-span-2 space-y-1.5"><Label>Doctor *</Label><Select value={form.doctorId.toString()} onValueChange={(v) => setForm({ ...form, doctorId: parseInt(v) })}><SelectTrigger><SelectValue placeholder="Select doctor" /></SelectTrigger><SelectContent>{doctors?.filter((d) => d.role === "doctor" || d.role === "admin").map((d) => <SelectItem key={d.id} value={d.id.toString()}>{d.name ?? d.email ?? `User #${d.id}`}</SelectItem>)}</SelectContent></Select></div>
             <div className="space-y-1.5"><Label>Date & Time *</Label><Input type="datetime-local" value={form.appointmentDate} onChange={(e) => setForm({ ...form, appointmentDate: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>Duration (min)</Label><Input type="number" value={form.duration} onChange={(e) => setForm({ ...form, duration: parseInt(e.target.value) || 30 })} /></div>
-            <div className="sm:col-span-2 space-y-1.5"><Label>Reason</Label><Input value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder="Reason for visit" /></div>
-            <div className="space-y-1.5"><Label>Status</Label><Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as any })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="pending">Pending</SelectItem><SelectItem value="completed">Completed</SelectItem><SelectItem value="cancelled">Cancelled</SelectItem><SelectItem value="no-show">No Show</SelectItem></SelectContent></Select></div>
-            <div className="sm:col-span-2 space-y-1.5"><Label>Notes</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} /></div>
+            <div className="sm:col-span-2 space-y-1.5"><Label>السبب</Label><Input value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder="Reason for visit" /></div>
+            <div className="space-y-1.5"><Label>الحالة</Label><Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as any })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="pending">قيد الانتظار</SelectItem><SelectItem value="completed">مكتمل</SelectItem><SelectItem value="cancelled">ملغى</SelectItem><SelectItem value="no-show">No Show</SelectItem></SelectContent></Select></div>
+            <div className="sm:col-span-2 space-y-1.5"><Label>الملاحظات</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} /></div>
           </div>
-          <DialogFooter><Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button><Button onClick={handleSubmit} disabled={createMutation.isPending || updateMutation.isPending}>{createMutation.isPending || updateMutation.isPending ? "Saving..." : editId ? "Update" : "Schedule"}</Button></DialogFooter>
+          <DialogFooter><Button variant="outline" onClick={() => setShowForm(false)}>إلغاء</Button><Button onClick={handleSubmit} disabled={createMutation.isPending || updateMutation.isPending}>{createMutation.isPending || updateMutation.isPending ? "جاري الحفظ..." : editId ? "Update" : "Schedule"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
-      <Dialog open={!!deleteId} onOpenChange={(v) => !v && setDeleteId(null)}><DialogContent aria-describedby={undefined} className="max-w-sm"><DialogHeader><DialogTitle>Delete Appointment?</DialogTitle></DialogHeader><p className="text-sm text-muted-foreground">This action cannot be undone.</p><DialogFooter><Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button><Button variant="destructive" onClick={() => deleteId && deleteMutation.mutate({ id: deleteId })} disabled={deleteMutation.isPending}>{deleteMutation.isPending ? "Deleting..." : "Delete"}</Button></DialogFooter></DialogContent></Dialog>
+      <Dialog open={!!deleteId} onOpenChange={(v) => !v && setDeleteId(null)}><DialogContent aria-describedby={undefined} className="max-w-sm"><DialogHeader><DialogTitle>حذف الموعد؟</DialogTitle></DialogHeader><p className="text-sm text-muted-foreground">لا يمكن التراجع عن هذا الإجراء.</p><DialogFooter><Button variant="outline" onClick={() => setDeleteId(null)}>إلغاء</Button><Button variant="destructive" onClick={() => deleteId && deleteMutation.mutate({ id: deleteId })} disabled={deleteMutation.isPending}>{deleteMutation.isPending ? "جاري الحذف..." : "Delete"}</Button></DialogFooter></DialogContent></Dialog>
     </div>
   );
 }

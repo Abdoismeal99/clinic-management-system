@@ -45,7 +45,7 @@ export default function ArchivePage() {
       {/* Search */}
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} placeholder="Search archived patients..." className="pl-9 h-9 text-sm" />
+        <Input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} placeholder="بحث في المرضى المؤرشفين..." className="pl-9 h-9 text-sm" />
       </div>
 
       {/* Stats */}
@@ -119,7 +119,7 @@ export default function ArchivePage() {
           </DialogHeader>
           <p className="text-sm text-muted-foreground">This patient will be restored to the active patient list with all their medical records intact.</p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRestoreId(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setRestoreId(null)}>إلغاء</Button>
             <Button onClick={() => restoreId && restoreMutation.mutate({ id: restoreId })} disabled={restoreMutation.isPending} className="gap-2">
               <RotateCcw className="w-4 h-4" /> {restoreMutation.isPending ? "Restoring..." : "Restore"}
             </Button>

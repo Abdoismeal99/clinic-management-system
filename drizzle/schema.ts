@@ -48,6 +48,7 @@ export const patients = mysqlTable("patients", {
   emergencyContactPhone: varchar("emergencyContactPhone", { length: 32 }),
   emergencyContactRelation: varchar("emergencyContactRelation", { length: 64 }),
   medicalNotes: text("medicalNotes"),
+  tags: text("tags"), // JSON array of tag strings e.g. '["سكري","ضغط"]'
   status: mysqlEnum("status", ["new", "follow-up", "stable", "critical"]).default("new").notNull(),
   isDeleted: boolean("isDeleted").default(false).notNull(),
   deletedAt: timestamp("deletedAt"),
@@ -129,6 +130,7 @@ export const prescriptions = mysqlTable("prescriptions", {
     duration: string;
     instructions: string;
   }>>().notNull(),
+  treatmentName: varchar("treatmentName", { length: 256 }),
   notes: text("notes"),
   isDeleted: boolean("isDeleted").default(false).notNull(),
   createdBy: int("createdBy").notNull(),

@@ -78,7 +78,7 @@ export default function Users() {
       {/* Search */}
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search users..." className="pl-9 h-9 text-sm" />
+        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="بحث في المستخدمين..." className="pl-9 h-9 text-sm" />
       </div>
 
       {/* Users Table */}
@@ -95,7 +95,7 @@ export default function Users() {
           ) : filteredUsers.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <UsersIcon className="w-10 h-10 mx-auto mb-3 opacity-20" />
-              <p className="font-medium">No users found</p>
+              <p className="font-medium">لا يوجد مستخدمون</p>
             </div>
           ) : (
             <div className="divide-y divide-border">
@@ -167,9 +167,9 @@ export default function Users() {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditUser(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setEditUser(null)}>إلغاء</Button>
             <Button onClick={() => editUser && updateRoleMutation.mutate({ userId: editUser.id, role: newRole as any })} disabled={updateRoleMutation.isPending}>
-              {updateRoleMutation.isPending ? "Saving..." : "Update Role"}
+              {updateRoleMutation.isPending ? "جاري الحفظ..." : "Update Role"}
             </Button>
           </DialogFooter>
         </DialogContent>

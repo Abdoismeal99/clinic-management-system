@@ -32,6 +32,7 @@ export const prescriptionsRouter = router({
     .input(z.object({
       patientId: z.number(),
       visitId: z.number().optional(),
+      treatmentName: z.string().optional(),
       medications: z.array(medicationItem).min(1),
       notes: z.string().optional(),
     }))

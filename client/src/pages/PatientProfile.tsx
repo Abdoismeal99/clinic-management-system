@@ -216,7 +216,7 @@ export default function PatientProfile() {
                 {patient.allergies && (
                   <div className="flex items-start gap-2 bg-red-50 border border-red-100 rounded-lg px-2.5 py-1.5">
                     <AlertTriangle className="w-3.5 h-3.5 text-red-500 mt-0.5 flex-shrink-0" />
-                    <div><p className="text-xs font-semibold text-red-700">Allergies</p><p className="text-xs text-red-600">{patient.allergies}</p></div>
+                    <div><p className="text-xs font-semibold text-red-700">الحساسيات</p><p className="text-xs text-red-600">{patient.allergies}</p></div>
                   </div>
                 )}
                 {patient.chronicDiseases && (
@@ -231,7 +231,7 @@ export default function PatientProfile() {
                 <>
                   <Separator className="my-3" />
                   <div className="text-sm">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Emergency Contact</p>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">جهة الاتصال الطارئة</p>
                     {patient.emergencyContactName && <p className="font-medium">{patient.emergencyContactName}</p>}
                     {patient.emergencyContactRelation && <p className="text-muted-foreground text-xs">{patient.emergencyContactRelation}</p>}
                     {patient.emergencyContactPhone && (
@@ -458,7 +458,7 @@ export default function PatientProfile() {
                 {prescriptions?.length === 0 && (
                   <div className="text-center py-10 text-muted-foreground">
                     <Pill className="w-10 h-10 mx-auto mb-3 opacity-20" />
-                    <p>No prescriptions yet</p>
+                    <p>لا توجد وصفات بعد</p>
                   </div>
                 )}
               </div>
@@ -575,34 +575,34 @@ export default function PatientProfile() {
             <div className="space-y-1.5"><Label>Gender *</Label>
               <Select value={editForm.gender ?? "male"} onValueChange={(v) => setEditForm({ ...editForm, gender: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="male">Male</SelectItem><SelectItem value="female">Female</SelectItem><SelectItem value="other">Other</SelectItem></SelectContent>
+                <SelectContent><SelectItem value="male">ذكر</SelectItem><SelectItem value="female">أنثى</SelectItem><SelectItem value="other">Other</SelectItem></SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5"><Label>Date of Birth</Label><Input type="date" value={editForm.dateOfBirth ?? ""} onChange={(e) => setEditForm({ ...editForm, dateOfBirth: e.target.value })} /></div>
-            <div className="space-y-1.5"><Label>Phone</Label><Input value={editForm.phone ?? ""} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} /></div>
+            <div className="space-y-1.5"><Label>تاريخ الميلاد</Label><Input type="date" value={editForm.dateOfBirth ?? ""} onChange={(e) => setEditForm({ ...editForm, dateOfBirth: e.target.value })} /></div>
+            <div className="space-y-1.5"><Label>الهاتف</Label><Input value={editForm.phone ?? ""} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>Occupation</Label><Input value={editForm.occupation ?? ""} onChange={(e) => setEditForm({ ...editForm, occupation: e.target.value })} /></div>
-            <div className="space-y-1.5"><Label>Blood Type</Label>
+            <div className="space-y-1.5"><Label>فصيلة الدم</Label>
               <Select value={editForm.bloodType ?? "unknown"} onValueChange={(v) => setEditForm({ ...editForm, bloodType: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{BLOOD_TYPES.map((bt) => <SelectItem key={bt} value={bt}>{bt === "unknown" ? "Unknown" : bt}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5"><Label>Status</Label>
+            <div className="space-y-1.5"><Label>الحالة</Label>
               <Select value={editForm.status ?? "new"} onValueChange={(v) => setEditForm({ ...editForm, status: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="new">New</SelectItem><SelectItem value="follow-up">Follow-up</SelectItem><SelectItem value="stable">Stable</SelectItem><SelectItem value="critical">Critical</SelectItem></SelectContent>
+                <SelectContent><SelectItem value="new">جديد</SelectItem><SelectItem value="follow-up">المتابعة</SelectItem><SelectItem value="stable">مستقر</SelectItem><SelectItem value="critical">حرج</SelectItem></SelectContent>
               </Select>
             </div>
-            <div className="sm:col-span-2 space-y-1.5"><Label>Address</Label><Input value={editForm.address ?? ""} onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} /></div>
-            <div className="sm:col-span-2 space-y-1.5"><Label>Allergies</Label><Input value={editForm.allergies ?? ""} onChange={(e) => setEditForm({ ...editForm, allergies: e.target.value })} placeholder="e.g. Penicillin, Aspirin" /></div>
-            <div className="sm:col-span-2 space-y-1.5"><Label>Chronic Diseases</Label><Input value={editForm.chronicDiseases ?? ""} onChange={(e) => setEditForm({ ...editForm, chronicDiseases: e.target.value })} /></div>
+            <div className="sm:col-span-2 space-y-1.5"><Label>العنوان</Label><Input value={editForm.address ?? ""} onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} /></div>
+            <div className="sm:col-span-2 space-y-1.5"><Label>الحساسيات</Label><Input value={editForm.allergies ?? ""} onChange={(e) => setEditForm({ ...editForm, allergies: e.target.value })} placeholder="e.g. Penicillin, Aspirin" /></div>
+            <div className="sm:col-span-2 space-y-1.5"><Label>الأمراض المزمنة</Label><Input value={editForm.chronicDiseases ?? ""} onChange={(e) => setEditForm({ ...editForm, chronicDiseases: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>Emergency Contact Name</Label><Input value={editForm.emergencyContactName ?? ""} onChange={(e) => setEditForm({ ...editForm, emergencyContactName: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>Emergency Phone</Label><Input value={editForm.emergencyContactPhone ?? ""} onChange={(e) => setEditForm({ ...editForm, emergencyContactPhone: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>Relation</Label><Input value={editForm.emergencyContactRelation ?? ""} onChange={(e) => setEditForm({ ...editForm, emergencyContactRelation: e.target.value })} /></div>
             <div className="sm:col-span-2 space-y-1.5"><Label>Medical Notes</Label><Textarea value={editForm.medicalNotes ?? ""} onChange={(e) => setEditForm({ ...editForm, medicalNotes: e.target.value })} rows={3} placeholder="General notes, observations..." /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEdit(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowEdit(false)}>إلغاء</Button>
             <Button onClick={() => updateMutation.mutate({ id: patientId, ...editForm, dateOfBirth: editForm.dateOfBirth || undefined })} disabled={updateMutation.isPending}>
               {updateMutation.isPending ? "Saving..." : "Save Changes"}
             </Button>
@@ -616,7 +616,7 @@ export default function PatientProfile() {
           <DialogHeader><DialogTitle>Delete Visit?</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">This visit will be permanently removed from the patient's record.</p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteVisitId(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDeleteVisitId(null)}>إلغاء</Button>
             <Button variant="destructive" onClick={() => deleteVisitId && deleteVisitMutation.mutate({ id: deleteVisitId })} disabled={deleteVisitMutation.isPending}>
               {deleteVisitMutation.isPending ? "Deleting..." : "Delete Visit"}
             </Button>
@@ -630,7 +630,7 @@ export default function PatientProfile() {
           <DialogHeader><DialogTitle>Delete Prescription?</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">This prescription will be permanently removed.</p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeletePrescId(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDeletePrescId(null)}>إلغاء</Button>
             <Button variant="destructive" onClick={() => deletePrescId && deletePrescMutation.mutate({ id: deletePrescId })} disabled={deletePrescMutation.isPending}>
               {deletePrescMutation.isPending ? "Deleting..." : "Delete"}
             </Button>
@@ -644,7 +644,7 @@ export default function PatientProfile() {
           <DialogHeader><DialogTitle>Delete File?</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">This file will be permanently removed.</p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteFileId(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDeleteFileId(null)}>إلغاء</Button>
             <Button variant="destructive" onClick={() => deleteFileId && deleteFileMutation.mutate({ id: deleteFileId })} disabled={deleteFileMutation.isPending}>
               {deleteFileMutation.isPending ? "Deleting..." : "Delete"}
             </Button>

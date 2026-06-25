@@ -90,7 +90,7 @@ export default function Files() {
   return (
     <div className="p-6 space-y-5 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold text-foreground">Medical Files</h1><p className="text-sm text-muted-foreground mt-0.5">Securely stored patient files and documents</p></div>
+        <div><h1 className="text-2xl font-bold text-foreground">الملفات الطبية</h1><p className="text-sm text-muted-foreground mt-0.5">Securely stored patient files and documents</p></div>
         {canUpload && <Button onClick={() => setShowUpload(true)} size="sm" className="gap-2 h-9"><Upload className="w-4 h-4" /> Upload File</Button>}
       </div>
       <div className="flex gap-3 flex-wrap">
@@ -154,10 +154,10 @@ export default function Files() {
               </div>
               <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} accept="image/*,.pdf,.doc,.docx" />
             </div>
-            <div className="space-y-1.5"><Label>Category</Label><Select value={uploadCategory} onValueChange={setUploadCategory}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{Object.entries(FILE_CATEGORY_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent></Select></div>
-            <div className="space-y-1.5"><Label>Description</Label><Input value={uploadDescription} onChange={(e) => setUploadDescription(e.target.value)} placeholder="Optional description" /></div>
+            <div className="space-y-1.5"><Label>الفئة</Label><Select value={uploadCategory} onValueChange={setUploadCategory}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{Object.entries(FILE_CATEGORY_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent></Select></div>
+            <div className="space-y-1.5"><Label>الوصف</Label><Input value={uploadDescription} onChange={(e) => setUploadDescription(e.target.value)} placeholder="Optional description" /></div>
           </div>
-          <DialogFooter><Button variant="outline" onClick={() => setShowUpload(false)}>Cancel</Button><Button onClick={handleUpload} disabled={uploading || !uploadFile}>{uploading ? "Uploading..." : "Upload"}</Button></DialogFooter>
+          <DialogFooter><Button variant="outline" onClick={() => setShowUpload(false)}>إلغاء</Button><Button onClick={handleUpload} disabled={uploading || !uploadFile}>{uploading ? "Uploading..." : "Upload"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -182,7 +182,7 @@ export default function Files() {
               <iframe src={previewUrl} className="w-full h-[60vh] rounded-lg border" title={previewName} />
             ) : null}
           </div>
-          <DialogFooter><Button variant="outline" onClick={() => setPreviewUrl(null)}>Close</Button>{previewUrl && <a href={previewUrl} download={previewName} target="_blank" rel="noreferrer"><Button className="gap-2"><Download className="w-4 h-4" /> Download</Button></a>}</DialogFooter>
+          <DialogFooter><Button variant="outline" onClick={() => setPreviewUrl(null)}>إغلاق</Button>{previewUrl && <a href={previewUrl} download={previewName} target="_blank" rel="noreferrer"><Button className="gap-2"><Download className="w-4 h-4" /> Download</Button></a>}</DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

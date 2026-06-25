@@ -102,7 +102,7 @@ export default function ActivityLog() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center justify-between">
-            <span>Activity Log</span>
+            <span>سجل النشاط</span>
             <Badge variant="secondary">{total} entries</Badge>
           </CardTitle>
         </CardHeader>

@@ -112,8 +112,17 @@
 
 ## New Features (Round 2)
 
-- [ ] Dark Mode toggle in sidebar with localStorage persistence
-- [ ] Dark mode CSS variables for all semantic colors
-- [ ] Full patient PDF export via server-side HTML generation (patient info + visits + prescriptions + files list)
-- [ ] AI reports backend router: diagnosis analysis, patient insights, trend summary using LLM
-- [ ] AI Reports page section with streaming insights and charts
+- [x] Dark Mode toggle in sidebar with localStorage persistence
+- [x] Dark mode CSS variables for all semantic colors
+- [x] Full patient PDF export via browser print (patient info + visits + prescriptions + files list + appointments)
+- [x] AI reports backend router: diagnosis analysis, patient insights, trend summary using LLM
+- [x] AI Reports page section with AI Analysis tab, data snapshot cards, and markdown-rendered report
+
+## New Features (Round 3)
+
+- [ ] Fix dark mode toggle (diagnose why it's not working)
+- [ ] Custom patient tags: tag input in add/edit patient form
+- [ ] Patient tags filter in patients list page
+- [ ] DB: add tags column to patients table
+- [ ] Add treatment name field to prescriptions
+- [ ] Full Arabic UI translation (all pages, navigation, forms, messages)

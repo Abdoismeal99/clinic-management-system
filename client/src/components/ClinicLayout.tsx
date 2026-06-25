@@ -20,20 +20,20 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useTheme } from "@/contexts/ThemeContext";
 
 const NAV_ITEMS = [
-  { label: "Dashboard", icon: Home, href: "/" },
-  { label: "Patients", icon: Users, href: "/patients" },
-  { label: "Visits", icon: Stethoscope, href: "/visits" },
-  { label: "Prescriptions", icon: Pill, href: "/prescriptions" },
-  { label: "Appointments", icon: Calendar, href: "/appointments" },
-  { label: "Files", icon: FileText, href: "/files" },
-  { label: "Search", icon: Search, href: "/search" },
-  { label: "Reports", icon: BarChart3, href: "/reports" },
-  { label: "Activity Log", icon: Activity, href: "/activity" },
+  { label: "لوحة التحكم", icon: Home, href: "/" },
+  { label: "المرضى", icon: Users, href: "/patients" },
+  { label: "الزيارات", icon: Stethoscope, href: "/visits" },
+  { label: "الوصفات", icon: Pill, href: "/prescriptions" },
+  { label: "المواعيد", icon: Calendar, href: "/appointments" },
+  { label: "الملفات", icon: FileText, href: "/files" },
+  { label: "بحث", icon: Search, href: "/search" },
+  { label: "التقارير", icon: BarChart3, href: "/reports" },
+  { label: "سجل النشاط", icon: Activity, href: "/activity" },
 ];
 
 const ADMIN_NAV_ITEMS = [
-  { label: "Users", icon: ClipboardList, href: "/users" },
-  { label: "Settings", icon: Settings, href: "/settings" },
+  { label: "المستخدمون", icon: ClipboardList, href: "/users" },
+  { label: "الإعدادات", icon: Settings, href: "/settings" },
 ];
 
 interface ClinicLayoutProps {
@@ -73,19 +73,19 @@ export default function ClinicLayout({ children }: ClinicLayoutProps) {
               <Stethoscope className="w-7 h-7 text-white" />
             </div>
             <div className="text-left">
-              <h1 className="text-xl font-bold text-foreground">Clinic Management</h1>
-              <p className="text-sm text-muted-foreground">Medical Information System</p>
+              <h1 className="text-xl font-bold text-foreground">نظام إدارة العيادة</h1>
+              <p className="text-sm text-muted-foreground">نظام المعلومات الطبية</p>
             </div>
           </div>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Sign in to access the clinic management system. Manage patients, visits, prescriptions, and more.
+سجّل دخولك للوصول إلى نظام إدارة العيادة. إدارة المرضى والزيارات والوصفات والمزيد.
           </p>
           <a href={getLoginUrl()}>
             <Button size="lg" className="w-full bg-primary hover:bg-primary-700 text-white font-medium">
-              Sign In to Continue
+تسجيل الدخول
             </Button>
           </a>
-          <p className="text-xs text-muted-foreground">Secure access — your data is protected</p>
+          <p className="text-xs text-muted-foreground">وصول آمن — بياناتك محمية</p>
         </div>
       </div>
     );
@@ -103,8 +103,8 @@ export default function ClinicLayout({ children }: ClinicLayoutProps) {
         </div>
         {!collapsed && (
           <div className="overflow-hidden">
-            <p className="text-sm font-bold text-sidebar-foreground leading-tight truncate">Clinic System</p>
-            <p className="text-xs text-sidebar-foreground/50 truncate">Medical Platform</p>
+            <p className="text-sm font-bold text-sidebar-foreground leading-tight truncate">نظام العيادة</p>
+            <p className="text-xs text-sidebar-foreground/50 truncate">المنصة الطبية</p>
           </div>
         )}
       </div>
@@ -147,7 +147,7 @@ export default function ClinicLayout({ children }: ClinicLayoutProps) {
         {(user?.role === "admin") && (
           <>
             <div className={cn("pt-3 pb-1", collapsed ? "px-0" : "px-3")}>
-              {!collapsed && <p className="text-xs font-semibold text-sidebar-foreground/40 uppercase tracking-wider">Administration</p>}
+              {!collapsed && <p className="text-xs font-semibold text-sidebar-foreground/40 uppercase tracking-wider">الإدارة</p>}
               {collapsed && <div className="border-t border-sidebar-border" />}
             </div>
             {ADMIN_NAV_ITEMS.map((item) => {
@@ -198,7 +198,7 @@ export default function ClinicLayout({ children }: ClinicLayoutProps) {
                 {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
             </TooltipTrigger>
-            <TooltipContent side="right">{theme === "dark" ? "Light Mode" : "Dark Mode"}</TooltipContent>
+            <TooltipContent side="right">{theme === "dark" ? "وضع نهاري" : "وضع ليلي"}</TooltipContent>
           </Tooltip>
         ) : (
           <button
@@ -206,7 +206,7 @@ export default function ClinicLayout({ children }: ClinicLayoutProps) {
             className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-muted hover:text-sidebar-foreground transition-colors"
           >
             {theme === "dark" ? <Sun className="w-4 h-4 flex-shrink-0" /> : <Moon className="w-4 h-4 flex-shrink-0" />}
-            <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+            <span>{theme === "dark" ? "وضع نهاري" : "وضع ليلي"}</span>
           </button>
         )}
       </div>
@@ -237,11 +237,11 @@ export default function ClinicLayout({ children }: ClinicLayoutProps) {
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/settings"><span className="flex items-center gap-2 cursor-pointer"><Settings className="w-4 h-4" /> Settings</span></Link>
+              <Link href="/settings"><span className="flex items-center gap-2 cursor-pointer"><Settings className="w-4 h-4" /> الإعدادات</span></Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive cursor-pointer">
-              <LogOut className="w-4 h-4 mr-2" /> Sign Out
+              <LogOut className="w-4 h-4 mr-2" /> تسجيل الخروج
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -250,7 +250,7 @@ export default function ClinicLayout({ children }: ClinicLayoutProps) {
   );
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="flex h-screen bg-background overflow-hidden" dir="rtl">
       {/* Desktop Sidebar */}
       <aside className={cn(
         "hidden lg:flex flex-col bg-sidebar border-r border-sidebar-border transition-all duration-200 relative flex-shrink-0",
@@ -259,7 +259,7 @@ export default function ClinicLayout({ children }: ClinicLayoutProps) {
         <SidebarContent />
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="absolute -right-3 top-20 w-6 h-6 bg-white border border-border rounded-full flex items-center justify-center shadow-sm hover:shadow-md transition-shadow z-10"
+          className="absolute -left-3 top-20 w-6 h-6 bg-white border border-border rounded-full flex items-center justify-center shadow-sm hover:shadow-md transition-shadow z-10"
         >
           {collapsed ? <ChevronRight className="w-3 h-3 text-muted-foreground" /> : <ChevronLeft className="w-3 h-3 text-muted-foreground" />}
         </button>
@@ -269,7 +269,7 @@ export default function ClinicLayout({ children }: ClinicLayoutProps) {
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
-          <aside className="absolute left-0 top-0 bottom-0 w-64 bg-sidebar flex flex-col">
+          <aside className="absolute right-0 top-0 bottom-0 w-64 bg-sidebar flex flex-col">
             <SidebarContent />
           </aside>
         </div>
@@ -286,7 +286,7 @@ export default function ClinicLayout({ children }: ClinicLayoutProps) {
             <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center">
               <Stethoscope className="w-4 h-4 text-white" />
             </div>
-            <span className="font-semibold text-sm">Clinic System</span>
+            <span className="font-semibold text-sm">نظام العيادة</span>
           </div>
         </header>
 

@@ -135,8 +135,8 @@ export default function VisitDetail() {
           </Card>
         </div>
         <div className="lg:col-span-2 space-y-4">
-          {visit.chiefComplaint && <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Chief Complaint</CardTitle></CardHeader><CardContent className="pt-0"><p className="text-sm">{visit.chiefComplaint}</p></CardContent></Card>}
-          {visit.symptoms && <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Symptoms</CardTitle></CardHeader><CardContent className="pt-0"><p className="text-sm leading-relaxed">{visit.symptoms}</p></CardContent></Card>}
+          {visit.chiefComplaint && <Card><CardHeader className="pb-2"><CardTitle className="text-sm">الشكوى الرئيسية</CardTitle></CardHeader><CardContent className="pt-0"><p className="text-sm">{visit.chiefComplaint}</p></CardContent></Card>}
+          {visit.symptoms && <Card><CardHeader className="pb-2"><CardTitle className="text-sm">الأعراض</CardTitle></CardHeader><CardContent className="pt-0"><p className="text-sm leading-relaxed">{visit.symptoms}</p></CardContent></Card>}
           {visit.diagnosisText && <Card className="border-primary/20 bg-primary/5"><CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-primary" /> Diagnosis</CardTitle></CardHeader><CardContent className="pt-0"><p className="text-sm font-medium">{visit.diagnosisText}</p></CardContent></Card>}
           {visit.doctorNotes && <Card><CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><FileText className="w-4 h-4 text-primary" /> Doctor Notes</CardTitle></CardHeader><CardContent className="pt-0"><p className="text-sm leading-relaxed whitespace-pre-wrap">{visit.doctorNotes}</p></CardContent></Card>}
           <div className="grid grid-cols-2 gap-3 print:hidden">
@@ -150,10 +150,10 @@ export default function VisitDetail() {
           <DialogHeader><DialogTitle>Edit Visit #{visit.id}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
             <div className="space-y-1.5"><Label>Visit Date *</Label><Input type="datetime-local" value={form.visitDate ?? ""} onChange={(e) => setForm({ ...form, visitDate: e.target.value })} /></div>
-            <div className="space-y-1.5"><Label>Status</Label><Select value={form.status ?? "completed"} onValueChange={(v) => setForm({ ...form, status: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{VISIT_STATUSES.map((s) => <SelectItem key={s} value={s}>{STATUS_CONFIG[s].label}</SelectItem>)}</SelectContent></Select></div>
-            <div className="sm:col-span-2 space-y-1.5"><Label>Chief Complaint</Label><Input value={form.chiefComplaint ?? ""} onChange={(e) => setForm({ ...form, chiefComplaint: e.target.value })} /></div>
-            <div className="sm:col-span-2 space-y-1.5"><Label>Symptoms</Label><Textarea value={form.symptoms ?? ""} onChange={(e) => setForm({ ...form, symptoms: e.target.value })} rows={2} /></div>
-            <div className="sm:col-span-2 space-y-1.5"><Label>Diagnosis</Label><Input value={form.diagnosisText ?? ""} onChange={(e) => setForm({ ...form, diagnosisText: e.target.value })} /></div>
+            <div className="space-y-1.5"><Label>الحالة</Label><Select value={form.status ?? "completed"} onValueChange={(v) => setForm({ ...form, status: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{VISIT_STATUSES.map((s) => <SelectItem key={s} value={s}>{STATUS_CONFIG[s].label}</SelectItem>)}</SelectContent></Select></div>
+            <div className="sm:col-span-2 space-y-1.5"><Label>الشكوى الرئيسية</Label><Input value={form.chiefComplaint ?? ""} onChange={(e) => setForm({ ...form, chiefComplaint: e.target.value })} /></div>
+            <div className="sm:col-span-2 space-y-1.5"><Label>الأعراض</Label><Textarea value={form.symptoms ?? ""} onChange={(e) => setForm({ ...form, symptoms: e.target.value })} rows={2} /></div>
+            <div className="sm:col-span-2 space-y-1.5"><Label>التشخيص</Label><Input value={form.diagnosisText ?? ""} onChange={(e) => setForm({ ...form, diagnosisText: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>BP Systolic</Label><Input type="number" value={form.bloodPressureSystolic ?? ""} onChange={(e) => setForm({ ...form, bloodPressureSystolic: e.target.value })} placeholder="120" /></div>
             <div className="space-y-1.5"><Label>BP Diastolic</Label><Input type="number" value={form.bloodPressureDiastolic ?? ""} onChange={(e) => setForm({ ...form, bloodPressureDiastolic: e.target.value })} placeholder="80" /></div>
             <div className="space-y-1.5"><Label>Heart Rate (bpm)</Label><Input type="number" value={form.heartRate ?? ""} onChange={(e) => setForm({ ...form, heartRate: e.target.value })} /></div>
@@ -162,12 +162,12 @@ export default function VisitDetail() {
             <div className="space-y-1.5"><Label>Height (cm)</Label><Input value={form.height ?? ""} onChange={(e) => setForm({ ...form, height: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>O₂ Saturation (%)</Label><Input type="number" value={form.oxygenSaturation ?? ""} onChange={(e) => setForm({ ...form, oxygenSaturation: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>Respiratory Rate</Label><Input type="number" value={form.respiratoryRate ?? ""} onChange={(e) => setForm({ ...form, respiratoryRate: e.target.value })} /></div>
-            <div className="space-y-1.5"><Label>Follow-up Date</Label><Input type="date" value={form.followUpDate ?? ""} onChange={(e) => setForm({ ...form, followUpDate: e.target.value })} /></div>
+            <div className="space-y-1.5"><Label>تاريخ المتابعة</Label><Input type="date" value={form.followUpDate ?? ""} onChange={(e) => setForm({ ...form, followUpDate: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>Follow-up Notes</Label><Input value={form.followUpNotes ?? ""} onChange={(e) => setForm({ ...form, followUpNotes: e.target.value })} /></div>
-            <div className="sm:col-span-2 space-y-1.5"><Label>Doctor Notes</Label><Textarea value={form.doctorNotes ?? ""} onChange={(e) => setForm({ ...form, doctorNotes: e.target.value })} rows={4} /></div>
+            <div className="sm:col-span-2 space-y-1.5"><Label>ملاحظات الطبيب</Label><Textarea value={form.doctorNotes ?? ""} onChange={(e) => setForm({ ...form, doctorNotes: e.target.value })} rows={4} /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEdit(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowEdit(false)}>إلغاء</Button>
             <Button onClick={handleUpdate} disabled={updateMutation.isPending}>{updateMutation.isPending ? "Saving..." : "Save Changes"}</Button>
           </DialogFooter>
         </DialogContent>

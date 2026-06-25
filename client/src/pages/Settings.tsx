@@ -159,7 +159,7 @@ export default function Settings() {
             <CardContent className="space-y-5">
               {/* Logo */}
               <div className="space-y-3">
-                <Label className="text-sm font-medium">Clinic Logo</Label>
+                <Label className="text-sm font-medium">شعار العيادة</Label>
                 <div className="flex items-center gap-4">
                   <div className="w-20 h-20 rounded-xl border-2 border-dashed border-border flex items-center justify-center bg-muted/30 overflow-hidden flex-shrink-0">
                     {logoPreview ? (
@@ -188,7 +188,7 @@ export default function Settings() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2 space-y-1.5">
-                  <Label>Clinic Name</Label>
+                  <Label>اسم العيادة</Label>
                   <Input value={clinic.name} onChange={(e) => setClinic({ ...clinic, name: e.target.value })} placeholder="e.g. City Medical Center" disabled={!isAdmin} />
                 </div>
                 <div className="space-y-1.5">
@@ -200,7 +200,7 @@ export default function Settings() {
                   <Input type="email" value={clinic.email} onChange={(e) => setClinic({ ...clinic, email: e.target.value })} placeholder="clinic@example.com" disabled={!isAdmin} />
                 </div>
                 <div className="sm:col-span-2 space-y-1.5">
-                  <Label>Address</Label>
+                  <Label>العنوان</Label>
                   <Textarea value={clinic.address} onChange={(e) => setClinic({ ...clinic, address: e.target.value })} rows={2} placeholder="Full clinic address" disabled={!isAdmin} />
                 </div>
               </div>
@@ -208,7 +208,7 @@ export default function Settings() {
               {isAdmin && (
                 <div className="flex justify-end">
                   <Button onClick={saveClinic} disabled={upsertManyMutation.isPending} className="gap-2">
-                    <Save className="w-4 h-4" /> {upsertManyMutation.isPending ? "Saving..." : "Save Clinic Info"}
+                    <Save className="w-4 h-4" /> {upsertManyMutation.isPending ? "جاري الحفظ..." : "Save Clinic Info"}
                   </Button>
                 </div>
               )}
@@ -226,26 +226,26 @@ export default function Settings() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2 space-y-1.5">
-                  <Label>Doctor Name</Label>
+                  <Label>اسم الطبيب</Label>
                   <Input value={doctor.name} onChange={(e) => setDoctor({ ...doctor, name: e.target.value })} placeholder="Dr. John Smith" disabled={!isAdmin} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Specialty</Label>
+                  <Label>التخصص</Label>
                   <Input value={doctor.specialty} onChange={(e) => setDoctor({ ...doctor, specialty: e.target.value })} placeholder="e.g. General Practice" disabled={!isAdmin} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Phone</Label>
+                  <Label>الهاتف</Label>
                   <Input value={doctor.phone} onChange={(e) => setDoctor({ ...doctor, phone: e.target.value })} disabled={!isAdmin} />
                 </div>
                 <div className="sm:col-span-2 space-y-1.5">
-                  <Label>Email</Label>
+                  <Label>البريد الإلكتروني</Label>
                   <Input type="email" value={doctor.email} onChange={(e) => setDoctor({ ...doctor, email: e.target.value })} disabled={!isAdmin} />
                 </div>
               </div>
               {isAdmin && (
                 <div className="flex justify-end">
                   <Button onClick={saveDoctor} disabled={upsertManyMutation.isPending} className="gap-2">
-                    <Save className="w-4 h-4" /> {upsertManyMutation.isPending ? "Saving..." : "Save Doctor Info"}
+                    <Save className="w-4 h-4" /> {upsertManyMutation.isPending ? "جاري الحفظ..." : "Save Doctor Info"}
                   </Button>
                 </div>
               )}
@@ -263,7 +263,7 @@ export default function Settings() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label>Language</Label>
+                  <Label>اللغة</Label>
                   <Select value={prefs.language} onValueChange={(v) => setPrefs({ ...prefs, language: v })} disabled={!isAdmin}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -330,7 +330,7 @@ export default function Settings() {
               {isAdmin && (
                 <div className="flex justify-end">
                   <Button onClick={savePrefs} disabled={upsertManyMutation.isPending} className="gap-2">
-                    <Save className="w-4 h-4" /> {upsertManyMutation.isPending ? "Saving..." : "Save Preferences"}
+                    <Save className="w-4 h-4" /> {upsertManyMutation.isPending ? "جاري الحفظ..." : "Save Preferences"}
                   </Button>
                 </div>
               )}

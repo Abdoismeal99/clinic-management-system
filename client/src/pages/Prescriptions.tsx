@@ -305,7 +305,7 @@ export default function Prescriptions() {
                 {medications.map((med, i) => (
                   <div key={i} className="p-3 border border-border rounded-lg space-y-3 bg-muted/20">
                     <div className="flex items-center justify-between">
-                      <p className="text-xs font-medium text-muted-foreground">Medication {i + 1}</p>
+                      <p className="text-xs font-medium text-muted-foreground">دواء {i + 1}</p>
                       {medications.length > 1 && (
                         <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeMed(i)}>
                           <X className="w-3 h-3" />
@@ -362,15 +362,15 @@ export default function Prescriptions() {
                 {templateMeds.map((med, i) => (
                   <div key={i} className="p-3 border border-border rounded-lg space-y-3 bg-muted/20">
                     <div className="flex items-center justify-between">
-                      <p className="text-xs font-medium text-muted-foreground">Medication {i + 1}</p>
+                      <p className="text-xs font-medium text-muted-foreground">دواء {i + 1}</p>
                       {templateMeds.length > 1 && <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeTemplateMed(i)}><X className="w-3 h-3" /></Button>}
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="sm:col-span-2 space-y-1"><Label className="text-xs">Medicine *</Label><Input value={med.medicine} onChange={(e) => updateTemplateMed(i, "medicine", e.target.value)} className="h-8 text-sm" /></div>
-                      <div className="space-y-1"><Label className="text-xs">Dose *</Label><Input value={med.dose} onChange={(e) => updateTemplateMed(i, "dose", e.target.value)} className="h-8 text-sm" /></div>
-                      <div className="space-y-1"><Label className="text-xs">Frequency *</Label><Input value={med.frequency} onChange={(e) => updateTemplateMed(i, "frequency", e.target.value)} className="h-8 text-sm" /></div>
-                      <div className="space-y-1"><Label className="text-xs">Duration *</Label><Input value={med.duration} onChange={(e) => updateTemplateMed(i, "duration", e.target.value)} className="h-8 text-sm" /></div>
-                      <div className="space-y-1"><Label className="text-xs">Instructions</Label><Input value={med.instructions} onChange={(e) => updateTemplateMed(i, "instructions", e.target.value)} className="h-8 text-sm" /></div>
+                      <div className="sm:col-span-2 space-y-1"><Label className="text-xs">اسم الدواء *</Label><Input value={med.medicine} onChange={(e) => updateTemplateMed(i, "medicine", e.target.value)} className="h-8 text-sm" /></div>
+                      <div className="space-y-1"><Label className="text-xs">الجرعة *</Label><Input value={med.dose} onChange={(e) => updateTemplateMed(i, "dose", e.target.value)} className="h-8 text-sm" /></div>
+                      <div className="space-y-1"><Label className="text-xs">التكرار *</Label><Input value={med.frequency} onChange={(e) => updateTemplateMed(i, "frequency", e.target.value)} className="h-8 text-sm" /></div>
+                      <div className="space-y-1"><Label className="text-xs">المدة *</Label><Input value={med.duration} onChange={(e) => updateTemplateMed(i, "duration", e.target.value)} className="h-8 text-sm" /></div>
+                      <div className="space-y-1"><Label className="text-xs">تعليمات</Label><Input value={med.instructions} onChange={(e) => updateTemplateMed(i, "instructions", e.target.value)} className="h-8 text-sm" /></div>
                     </div>
                   </div>
                 ))}

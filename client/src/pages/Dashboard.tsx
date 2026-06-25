@@ -55,25 +55,25 @@ export default function Dashboard() {
   })();
 
   const ACTION_LABELS: Record<string, string> = {
-    patient_created: "Patient Created",
-    patient_updated: "Patient Updated",
-    patient_deleted: "Patient Archived",
-    patient_restored: "Patient Restored",
-    visit_created: "Visit Added",
-    visit_updated: "Visit Updated",
-    prescription_created: "Prescription Generated",
-    file_uploaded: "File Uploaded",
-    appointment_created: "Appointment Scheduled",
-    appointment_updated: "Appointment Updated",
+    patient_created: "تم إضافة مريض",
+    patient_updated: "تم تحديث بيانات مريض",
+    patient_deleted: "تم أرشفة مريض",
+    patient_restored: "تم استعادة مريض",
+    visit_created: "تم إضافة زيارة",
+    visit_updated: "تم تحديث زيارة",
+    prescription_created: "تم إنشاء وصفة طبية",
+    file_uploaded: "تم رفع ملف",
+    appointment_created: "تم جدولة موعد",
+    appointment_updated: "تم تحديث موعد",
   };
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-foreground">لوحة التحكم</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Welcome back, {user?.name ?? "Doctor"} · {format(new Date(), "EEEE, MMMM d, yyyy")}
+          أهلاً بعودتك، {user?.name ?? "دكتور"} · {format(new Date(), "EEEE, MMMM d, yyyy")}
         </p>
       </div>
 
@@ -84,10 +84,10 @@ export default function Dashboard() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="Total Patients" value={stats?.patientCount ?? 0} icon={Users} color="bg-blue-50 text-blue-600" subtitle="Active records" />
-          <StatCard title="Today's Appointments" value={stats?.todayAppts ?? 0} icon={Calendar} color="bg-green-50 text-green-600" subtitle="Scheduled today" />
-          <StatCard title="Follow-up Required" value={stats?.followUps?.length ?? 0} icon={AlertCircle} color="bg-amber-50 text-amber-600" subtitle="Within next 7 days" />
-          <StatCard title="Recent Visits" value={stats?.recentVisits?.length ?? 0} icon={Stethoscope} color="bg-purple-50 text-purple-600" subtitle="Last 5 visits" />
+          <StatCard title="إجمالي المرضى" value={stats?.patientCount ?? 0} icon={Users} color="bg-blue-50 text-blue-600" subtitle="سجلات نشطة" />
+          <StatCard title="مواعيد اليوم" value={stats?.todayAppts ?? 0} icon={Calendar} color="bg-green-50 text-green-600" subtitle="مجدولة اليوم" />
+          <StatCard title="متابعة مطلوبة" value={stats?.followUps?.length ?? 0} icon={AlertCircle} color="bg-amber-50 text-amber-600" subtitle="خلال 7 أيام" />
+          <StatCard title="زيارات حديثة" value={stats?.recentVisits?.length ?? 0} icon={Stethoscope} color="bg-purple-50 text-purple-600" subtitle="آخر 5 زيارات" />
         </div>
       )}
 
@@ -97,7 +97,7 @@ export default function Dashboard() {
         <Card className="lg:col-span-2">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-primary" /> Monthly Statistics
+              <TrendingUp className="w-4 h-4 text-primary" /> إحصائيات شهرية
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -119,8 +119,8 @@ export default function Dashboard() {
                   <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                   <Tooltip contentStyle={{ borderRadius: "8px", border: "1px solid #e5e7eb", fontSize: "12px" }} />
                   <Legend wrapperStyle={{ fontSize: "12px" }} />
-                  <Area type="monotone" dataKey="patients" stroke="#3B82F6" strokeWidth={2} fill="url(#colorPatients)" name="New Patients" />
-                  <Area type="monotone" dataKey="visits" stroke="#10B981" strokeWidth={2} fill="url(#colorVisits)" name="Visits" />
+                  <Area type="monotone" dataKey="patients" stroke="#3B82F6" strokeWidth={2} fill="url(#colorPatients)" name="مرضى جدد" />
+                  <Area type="monotone" dataKey="visits" stroke="#10B981" strokeWidth={2} fill="url(#colorVisits)" name="زيارات" />
                 </AreaChart>
               </ResponsiveContainer>
             )}
@@ -131,7 +131,7 @@ export default function Dashboard() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Clock className="w-4 h-4 text-amber-500" /> Follow-up Reminders
+              <Clock className="w-4 h-4 text-amber-500" /> تذكيرات المتابعة
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -140,14 +140,14 @@ export default function Dashboard() {
             ) : stats?.followUps?.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground text-sm">
                 <Clock className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                No upcoming follow-ups
+لا توجد متابعات قادمة
               </div>
             ) : (
               stats?.followUps?.slice(0, 5).map((v) => (
                 <div key={v.id} className="flex items-start gap-3 p-2.5 rounded-lg bg-amber-50 border border-amber-100">
                   <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-xs font-medium text-foreground truncate">Patient #{v.patientId}</p>
+                    <p className="text-xs font-medium text-foreground truncate">مريض #{v.patientId}</p>
                     <p className="text-xs text-muted-foreground">
                       {v.followUpDate ? formatDistanceToNow(new Date(v.followUpDate), { addSuffix: true }) : ""}
                     </p>
@@ -165,11 +165,11 @@ export default function Dashboard() {
         <Card>
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Users className="w-4 h-4 text-primary" /> Recent Patients
+              <Users className="w-4 h-4 text-primary" /> آخر المرضى
             </CardTitle>
             <Link href="/patients">
               <Button variant="ghost" size="sm" className="text-xs h-7 gap-1">
-                View All <ChevronRight className="w-3 h-3" />
+                عرض الكل <ChevronRight className="w-3 h-3" />
               </Button>
             </Link>
           </CardHeader>
@@ -179,7 +179,7 @@ export default function Dashboard() {
             ) : stats?.recentPatients?.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground text-sm">
                 <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                No patients yet
+                لا يوجد مرضى بعد
               </div>
             ) : (
               <div className="space-y-1">
@@ -210,11 +210,11 @@ export default function Dashboard() {
         <Card>
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Activity className="w-4 h-4 text-primary" /> Latest Activity
+              <Activity className="w-4 h-4 text-primary" /> آخر النشاط
             </CardTitle>
             <Link href="/activity">
               <Button variant="ghost" size="sm" className="text-xs h-7 gap-1">
-                View All <ChevronRight className="w-3 h-3" />
+                عرض الكل <ChevronRight className="w-3 h-3" />
               </Button>
             </Link>
           </CardHeader>
@@ -224,7 +224,7 @@ export default function Dashboard() {
             ) : stats?.activities?.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground text-sm">
                 <Activity className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                No activity yet
+                لا يوجد نشاط بعد
               </div>
             ) : (
               <div className="space-y-1">

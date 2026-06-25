@@ -76,11 +76,11 @@ export default function Reports() {
 
       <Tabs defaultValue="patients">
         <TabsList className="h-9">
-          <TabsTrigger value="patients" className="text-sm">Patients</TabsTrigger>
-          <TabsTrigger value="visits" className="text-sm">Visits</TabsTrigger>
-          <TabsTrigger value="diagnoses" className="text-sm">Diagnoses</TabsTrigger>
-          <TabsTrigger value="doctors" className="text-sm">Doctors</TabsTrigger>
-          <TabsTrigger value="ai" className="text-sm gap-1.5"><Sparkles className="w-3.5 h-3.5" />AI Analysis</TabsTrigger>
+          <TabsTrigger value="patients" className="text-sm">المرضى</TabsTrigger>
+          <TabsTrigger value="visits" className="text-sm">الزيارات</TabsTrigger>
+          <TabsTrigger value="diagnoses" className="text-sm">التشخيصات</TabsTrigger>
+          <TabsTrigger value="doctors" className="text-sm">الأطباء</TabsTrigger>
+          <TabsTrigger value="ai" className="text-sm gap-1.5"><Sparkles className="w-3.5 h-3.5" />تحليل الذكاء الاصطناعي</TabsTrigger>
         </TabsList>
 
         {/* Monthly Patients */}
@@ -155,7 +155,7 @@ export default function Reports() {
                       </div>
                     </div>
                   ))}
-                  {(patientStatus ?? []).length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No data available</p>}
+                  {(patientStatus ?? []).length === 0 && <p className="text-sm text-muted-foreground text-center py-4">لا توجد بيانات</p>}
                 </div>
               </CardContent>
             </Card>
@@ -167,7 +167,7 @@ export default function Reports() {
           <Card>
             <CardHeader className="flex flex-row items-start justify-between gap-3">
               <div>
-                <CardTitle className="text-base">Monthly Visits</CardTitle>
+                <CardTitle className="text-base">الزيارات الشهرية</CardTitle>
                 <CardDescription>Visit volume over the last 12 months</CardDescription>
               </div>
               <Button variant="outline" size="sm" className="gap-2 h-8 flex-shrink-0" onClick={() => exportCSV(monthlyVisits ?? [], "monthly-visits")}>
@@ -237,7 +237,7 @@ export default function Reports() {
           <Card>
             <CardHeader className="flex flex-row items-start justify-between gap-3">
               <div>
-                <CardTitle className="text-base">Doctor Statistics</CardTitle>
+                <CardTitle className="text-base">إحصائيات الأطباء</CardTitle>
                 <CardDescription>Visits and patients per doctor</CardDescription>
               </div>
               <Button variant="outline" size="sm" className="gap-2 h-8 flex-shrink-0" onClick={() => exportCSV(doctorStats ?? [], "doctor-stats")}>
@@ -258,7 +258,7 @@ export default function Reports() {
               </ResponsiveContainer>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead><tr className="border-b border-border"><th className="text-left py-2 font-medium text-muted-foreground">Doctor</th><th className="text-right py-2 font-medium text-muted-foreground">Visits</th><th className="text-right py-2 font-medium text-muted-foreground">Patients</th><th className="text-right py-2 font-medium text-muted-foreground">Prescriptions</th></tr></thead>
+                  <thead><tr className="border-b border-border"><th className="text-left py-2 font-medium text-muted-foreground">الطبيب</th><th className="text-right py-2 font-medium text-muted-foreground">الزيارات</th><th className="text-right py-2 font-medium text-muted-foreground">المرضى</th><th className="text-right py-2 font-medium text-muted-foreground">الوصفات</th></tr></thead>
                   <tbody>
                     {(doctorStats ?? []).map((d: any) => (
                       <tr key={d.doctorId} className="border-b border-border/50 last:border-0">
@@ -316,11 +316,11 @@ export default function Reports() {
                     className="gap-2"
                   >
                     {aiMutation.isPending ? (
-                      <><Loader2 className="w-4 h-4 animate-spin" />Analyzing clinic data...</>
+                      <><Loader2 className="w-4 h-4 animate-spin" />جاري تحليل بيانات العيادة...</>
                     ) : aiReport ? (
                       <><RefreshCw className="w-4 h-4" />Regenerate Report</>
                     ) : (
-                      <><Sparkles className="w-4 h-4" />Generate AI Report</>
+                      <><Sparkles className="w-4 h-4" />إنشاء تقرير ذكي</>
                     )}
                   </Button>
                   {aiReport && (

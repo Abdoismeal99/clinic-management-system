@@ -1,0 +1,1 @@
+ALTER TABLE `patients` ADD `tags` text;

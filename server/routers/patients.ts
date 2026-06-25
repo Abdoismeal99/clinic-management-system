@@ -21,6 +21,7 @@ const patientInput = z.object({
   emergencyContactPhone: z.string().optional(),
   emergencyContactRelation: z.string().optional(),
   medicalNotes: z.string().optional(),
+  tags: z.array(z.string()).optional(),
   status: z.enum(["new", "follow-up", "stable", "critical"]).optional(),
 });
 
@@ -30,6 +31,7 @@ export const patientsRouter = router({
       search: z.string().optional(),
       status: z.string().optional(),
       gender: z.string().optional(),
+      tag: z.string().optional(),
       isDeleted: z.boolean().optional(),
       page: z.number().optional(),
       limit: z.number().optional(),
@@ -60,6 +62,7 @@ export const patientsRouter = router({
         gender: input.gender,
         status: input.status ?? "new",
         dateOfBirth: input.dateOfBirth ? new Date(input.dateOfBirth) : null,
+        tags: input.tags && input.tags.length > 0 ? JSON.stringify(input.tags) : null,
         createdBy: ctx.user.id,
       });
       await logActivity({
@@ -83,6 +86,7 @@ export const patientsRouter = router({
       await updatePatient(id, {
         ...data,
         dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
+        tags: data.tags !== undefined ? JSON.stringify(data.tags) : undefined,
       }, ctx.user.id);
       await logActivity({
         userId: ctx.user.id,
