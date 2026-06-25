@@ -120,9 +120,9 @@
 
 ## New Features (Round 3)
 
-- [ ] Fix dark mode toggle (diagnose why it's not working)
-- [ ] Custom patient tags: tag input in add/edit patient form
-- [ ] Patient tags filter in patients list page
-- [ ] DB: add tags column to patients table
-- [ ] Add treatment name field to prescriptions
-- [ ] Full Arabic UI translation (all pages, navigation, forms, messages)
+- [x] Fix dark mode toggle (moved CSS vars from @theme inline to :root/.dark blocks)
+- [x] Custom patient tags: tag input in add/edit patient form (TagInput component)
+- [x] Patient tags filter in patients list page
+- [x] DB: add tags column to patients table (VARCHAR 500)
+- [x] Add treatment name field to prescriptions (treatmentName column + form field)
+- [x] Full Arabic UI translation (all pages, navigation, forms, messages) + RTL + Cairo font

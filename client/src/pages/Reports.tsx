@@ -46,12 +46,12 @@ export default function Reports() {
     <div className="p-6 space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Reports & Analytics</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Clinic statistics, trends, and performance metrics</p>
+          <h1 className="text-2xl font-bold text-foreground">التقارير والإحصائيات</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">إحصائيات العيادة والاتجاهات ومؤشرات الأداء</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" className="gap-2 h-9" onClick={() => window.print()}>
-            <Printer className="w-4 h-4" /> Print
+            <Printer className="w-4 h-4" /> طباعة
           </Button>
         </div>
       </div>
@@ -59,10 +59,10 @@ export default function Reports() {
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Patients (12mo)", value: totalPatients, icon: <Users className="w-5 h-5 text-blue-600" />, bg: "bg-blue-50" },
-          { label: "Total Visits (12mo)", value: totalVisits, icon: <Activity className="w-5 h-5 text-green-600" />, bg: "bg-green-50" },
-          { label: "Top Diagnosis", value: topDiag, icon: <Stethoscope className="w-5 h-5 text-purple-600" />, bg: "bg-purple-50" },
-          { label: "Doctors Active", value: doctorStats?.length ?? 0, icon: <TrendingUp className="w-5 h-5 text-amber-600" />, bg: "bg-amber-50" },
+          { label: "إجمالي المرضى (12 شهر)", value: totalPatients, icon: <Users className="w-5 h-5 text-blue-600" />, bg: "bg-blue-50" },
+          { label: "إجمالي الزيارات (12 شهر)", value: totalVisits, icon: <Activity className="w-5 h-5 text-green-600" />, bg: "bg-green-50" },
+          { label: "أكثر تشخيص", value: topDiag, icon: <Stethoscope className="w-5 h-5 text-purple-600" />, bg: "bg-purple-50" },
+          { label: "الأطباء النشطون", value: doctorStats?.length ?? 0, icon: <TrendingUp className="w-5 h-5 text-amber-600" />, bg: "bg-amber-50" },
         ].map((stat) => (
           <Card key={stat.label}>
             <CardContent className="p-4">
@@ -88,8 +88,8 @@ export default function Reports() {
           <Card>
             <CardHeader className="flex flex-row items-start justify-between gap-3">
               <div>
-                <CardTitle className="text-base">Monthly New Patients</CardTitle>
-                <CardDescription>Patient registrations over the last 12 months</CardDescription>
+                <CardTitle className="text-base">المرضى الجدد شهرياً</CardTitle>
+                <CardDescription>تسجيلات المرضى خلال الـ 12 شهر الماضية</CardDescription>
               </div>
               <Button variant="outline" size="sm" className="gap-2 h-8 flex-shrink-0" onClick={() => exportCSV(monthlyPatients ?? [], "monthly-patients")}>
                 <Download className="w-3.5 h-3.5" /> CSV
@@ -103,7 +103,7 @@ export default function Reports() {
                     <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                     <YAxis tick={{ fontSize: 12 }} />
                     <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: 12 }} />
-                    <Bar dataKey="count" name="New Patients" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="count" name="مرضى جدد" fill="#2563eb" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -115,8 +115,8 @@ export default function Reports() {
             <Card>
               <CardHeader className="flex flex-row items-start justify-between gap-3">
                 <div>
-                  <CardTitle className="text-base">Patient Status Distribution</CardTitle>
-                  <CardDescription>Current patient status breakdown</CardDescription>
+                  <CardTitle className="text-base">توزيع حالات المرضى</CardTitle>
+                  <CardDescription>تفصيل الحالات الحالية للمرضى</CardDescription>
                 </div>
                 <Button variant="outline" size="sm" className="gap-2 h-8 flex-shrink-0" onClick={() => exportCSV(patientStatus ?? [], "patient-status")}>
                   <Download className="w-3.5 h-3.5" /> CSV
@@ -137,7 +137,7 @@ export default function Reports() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Patient Status Table</CardTitle>
+                <CardTitle className="text-base">جدول حالات المرضى</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
@@ -168,7 +168,7 @@ export default function Reports() {
             <CardHeader className="flex flex-row items-start justify-between gap-3">
               <div>
                 <CardTitle className="text-base">الزيارات الشهرية</CardTitle>
-                <CardDescription>Visit volume over the last 12 months</CardDescription>
+                <CardDescription>حجم الزيارات خلال الـ 12 شهر الماضية</CardDescription>
               </div>
               <Button variant="outline" size="sm" className="gap-2 h-8 flex-shrink-0" onClick={() => exportCSV(monthlyVisits ?? [], "monthly-visits")}>
                 <Download className="w-3.5 h-3.5" /> CSV
@@ -183,8 +183,8 @@ export default function Reports() {
                     <YAxis tick={{ fontSize: 12 }} />
                     <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: 12 }} />
                     <Legend />
-                    <Line type="monotone" dataKey="count" name="Visits" stroke="#16a34a" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                    <Line type="monotone" dataKey="completed" name="Completed" stroke="#2563eb" strokeWidth={2} dot={{ r: 4 }} strokeDasharray="5 5" />
+                    <Line type="monotone" dataKey="count" name="زيارات" stroke="#16a34a" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                    <Line type="monotone" dataKey="completed" name="مكتملة" stroke="#2563eb" strokeWidth={2} dot={{ r: 4 }} strokeDasharray="5 5" />
                   </LineChart>
                 </ResponsiveContainer>
               )}
@@ -197,8 +197,8 @@ export default function Reports() {
           <Card>
             <CardHeader className="flex flex-row items-start justify-between gap-3">
               <div>
-                <CardTitle className="text-base">Most Common Diagnoses</CardTitle>
-                <CardDescription>Top diagnoses across all visits</CardDescription>
+                <CardTitle className="text-base">أكثر التشخيصات شيوعاً</CardTitle>
+                <CardDescription>أبرز التشخيصات عبر جميع الزيارات</CardDescription>
               </div>
               <Button variant="outline" size="sm" className="gap-2 h-8 flex-shrink-0" onClick={() => exportCSV(topDiagnoses ?? [], "top-diagnoses")}>
                 <Download className="w-3.5 h-3.5" /> CSV
@@ -212,7 +212,7 @@ export default function Reports() {
                     <XAxis type="number" tick={{ fontSize: 12 }} />
                     <YAxis type="category" dataKey="diagnosis" tick={{ fontSize: 11 }} width={80} />
                     <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: 12 }} />
-                    <Bar dataKey="count" name="Cases" fill="#7c3aed" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="count" name="حالات" fill="#7c3aed" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
                 <div className="space-y-2">
@@ -222,10 +222,10 @@ export default function Reports() {
                         <span className="text-xs font-bold text-muted-foreground w-5">{i + 1}.</span>
                         <span className="text-sm">{d.diagnosis}</span>
                       </div>
-                      <Badge variant="secondary">{d.count} cases</Badge>
+                      <Badge variant="secondary">{d.count} حالة</Badge>
                     </div>
                   ))}
-                  {(topDiagnoses ?? []).length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No diagnoses recorded yet</p>}
+                  {(topDiagnoses ?? []).length === 0 && <p className="text-sm text-muted-foreground text-center py-4">لا توجد تشخيصات مسجلة بعد</p>}
                 </div>
               </div>
             </CardContent>
@@ -238,7 +238,7 @@ export default function Reports() {
             <CardHeader className="flex flex-row items-start justify-between gap-3">
               <div>
                 <CardTitle className="text-base">إحصائيات الأطباء</CardTitle>
-                <CardDescription>Visits and patients per doctor</CardDescription>
+                <CardDescription>الزيارات والمرضى لكل طبيب</CardDescription>
               </div>
               <Button variant="outline" size="sm" className="gap-2 h-8 flex-shrink-0" onClick={() => exportCSV(doctorStats ?? [], "doctor-stats")}>
                 <Download className="w-3.5 h-3.5" /> CSV
@@ -252,8 +252,8 @@ export default function Reports() {
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: 12 }} />
                   <Legend />
-                  <Bar dataKey="totalVisits" name="Total Visits" fill="#2563eb" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="totalPatients" name="Unique Patients" fill="#16a34a" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="totalVisits" name="إجمالي الزيارات" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="totalPatients" name="مرضى فريدون" fill="#16a34a" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
               <div className="overflow-x-auto">
@@ -268,7 +268,7 @@ export default function Reports() {
                         <td className="py-2 text-right">{d.totalPrescriptions ?? 0}</td>
                       </tr>
                     ))}
-                    {(doctorStats ?? []).length === 0 && <tr><td colSpan={4} className="py-6 text-center text-muted-foreground">No doctor statistics available</td></tr>}
+                    {(doctorStats ?? []).length === 0 && <tr><td colSpan={4} className="py-6 text-center text-muted-foreground">لا توجد إحصائيات أطباء متاحة</td></tr>}
                   </tbody>
                 </table>
               </div>
@@ -287,18 +287,18 @@ export default function Reports() {
                     <Brain className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className="text-base">AI Medical Intelligence Report</CardTitle>
-                    <CardDescription className="text-xs mt-0.5">Powered by advanced AI — analyzes all clinic data to generate actionable medical insights</CardDescription>
+                    <CardTitle className="text-base">تقرير الذكاء الاصطناعي الطبي</CardTitle>
+                    <CardDescription className="text-xs mt-0.5">مدعوم بالذكاء الاصطناعي — يحلل بيانات العيادة كاملة لتوليد رؤى طبية قابلة للتنفيذ</CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
                   {[
-                    { label: "Disease Patterns", icon: <Stethoscope className="w-4 h-4 text-blue-500" />, desc: "Top diagnoses & trends" },
-                    { label: "Risk Assessment", icon: <AlertTriangle className="w-4 h-4 text-amber-500" />, desc: "Critical patient flags" },
-                    { label: "Operational Insights", icon: <Activity className="w-4 h-4 text-green-500" />, desc: "Workload & efficiency" },
-                    { label: "Recommendations", icon: <CheckCircle2 className="w-4 h-4 text-purple-500" />, desc: "Actionable next steps" },
+                    { label: "أنماط الأمراض", icon: <Stethoscope className="w-4 h-4 text-blue-500" />, desc: "أبرز التشخيصات والاتجاهات" },
+                    { label: "تقييم المخاطر", icon: <AlertTriangle className="w-4 h-4 text-amber-500" />, desc: "تنبيهات المرضى الحرجين" },
+                    { label: "رؤى تشغيلية", icon: <Activity className="w-4 h-4 text-green-500" />, desc: "عبء العمل والكفاءة" },
+                    { label: "توصيات", icon: <CheckCircle2 className="w-4 h-4 text-purple-500" />, desc: "خطوات قابلة للتنفيذ" },
                   ].map((item) => (
                     <div key={item.label} className="flex items-start gap-2 p-3 rounded-lg bg-background border">
                       {item.icon}
@@ -318,14 +318,14 @@ export default function Reports() {
                     {aiMutation.isPending ? (
                       <><Loader2 className="w-4 h-4 animate-spin" />جاري تحليل بيانات العيادة...</>
                     ) : aiReport ? (
-                      <><RefreshCw className="w-4 h-4" />Regenerate Report</>
+                      <><RefreshCw className="w-4 h-4" />إعادة إنشاء التقرير</>
                     ) : (
                       <><Sparkles className="w-4 h-4" />إنشاء تقرير ذكي</>
                     )}
                   </Button>
                   {aiReport && (
                     <p className="text-xs text-muted-foreground">
-                      Last generated: {new Date(aiReport.generatedAt).toLocaleString()}
+                      آخر تحديث: {new Date(aiReport.generatedAt).toLocaleString('ar-EG')}
                     </p>
                   )}
                 </div>
@@ -341,8 +341,8 @@ export default function Reports() {
                       <Brain className="w-8 h-8 text-primary animate-pulse" />
                     </div>
                     <div>
-                      <p className="font-semibold">Analyzing your clinic data...</p>
-                      <p className="text-sm text-muted-foreground mt-1">The AI is reviewing patient records, diagnoses, visit patterns, and operational metrics.</p>
+                      <p className="font-semibold">جاري تحليل بيانات العيادة...</p>
+                      <p className="text-sm text-muted-foreground mt-1">الذكاء الاصطناعي يراجع سجلات المرضى والتشخيصات وأنماط الزيارات والمؤشرات التشغيلية.</p>
                     </div>
                     <div className="flex gap-1.5">
                       {[0, 1, 2].map((i) => (
@@ -360,12 +360,12 @@ export default function Reports() {
                 {/* Data Snapshot */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                   {[
-                    { label: "Total Patients", value: aiReport.dataSnapshot.totalPatients },
-                    { label: "Total Visits", value: aiReport.dataSnapshot.totalVisits },
-                    { label: "Critical", value: aiReport.dataSnapshot.criticalCount, alert: aiReport.dataSnapshot.criticalCount > 0 },
-                    { label: "Follow-up", value: aiReport.dataSnapshot.followUpCount },
-                    { label: "Top Diagnosis", value: aiReport.dataSnapshot.topDiagnosis },
-                    { label: "Top Diag. Cases", value: aiReport.dataSnapshot.topDiagnosisCount },
+                    { label: "إجمالي المرضى", value: aiReport.dataSnapshot.totalPatients },
+                    { label: "إجمالي الزيارات", value: aiReport.dataSnapshot.totalVisits },
+                    { label: "حرجون", value: aiReport.dataSnapshot.criticalCount, alert: aiReport.dataSnapshot.criticalCount > 0 },
+                    { label: "متابعة", value: aiReport.dataSnapshot.followUpCount },
+                    { label: "أكثر تشخيص", value: aiReport.dataSnapshot.topDiagnosis },
+                    { label: "حالات التشخيص الأعلى", value: aiReport.dataSnapshot.topDiagnosisCount },
                   ].map((item) => (
                     <Card key={item.label} className={(item as any).alert ? "border-red-200 bg-red-50" : ""}>
                       <CardContent className="p-3 text-center">
@@ -382,7 +382,7 @@ export default function Reports() {
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-base flex items-center gap-2">
                         <Sparkles className="w-4 h-4 text-primary" />
-                        AI Medical Intelligence Report
+                        تقرير الذكاء الاصطناعي الطبي
                       </CardTitle>
                       <Button
                         variant="outline"
@@ -396,7 +396,7 @@ export default function Reports() {
                           URL.revokeObjectURL(url);
                         }}
                       >
-                        <Download className="w-3.5 h-3.5" /> Export
+                        <Download className="w-3.5 h-3.5" /> تصدير
                       </Button>
                     </div>
                   </CardHeader>

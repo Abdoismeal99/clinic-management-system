@@ -42,11 +42,11 @@ export default function Settings() {
 
   const { data: settingsData, isLoading } = trpc.settings.getAll.useQuery();
   const upsertManyMutation = trpc.settings.upsertMany.useMutation({
-    onSuccess: () => { toast.success("Settings saved"); utils.settings.getAll.invalidate(); },
+    onSuccess: () => { toast.success("تم حفظ الإعدادات"); utils.settings.getAll.invalidate(); },
     onError: (e) => toast.error(e.message),
   });
   const upsertMutation = trpc.settings.upsert.useMutation({
-    onSuccess: () => { toast.success("Logo updated"); utils.settings.getAll.invalidate(); },
+    onSuccess: () => { toast.success("تم تحديث الشعار"); utils.settings.getAll.invalidate(); },
     onError: (e) => toast.error(e.message),
   });
 
@@ -102,8 +102,8 @@ export default function Settings() {
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
-    if (file.size > 2 * 1024 * 1024) { toast.error("Logo must be under 2MB"); return; }
+    if (!file.type.startsWith("image/")) { toast.error("يرجى اختيار ملف صورة"); return; }
+    if (file.size > 2 * 1024 * 1024) { toast.error("يجب أن يكون الشعار أقل من 2 ميجابايت"); return; }
     setLogoUploading(true);
     try {
       const reader = new FileReader();
@@ -117,7 +117,7 @@ export default function Settings() {
       reader.readAsDataURL(file);
     } catch {
       setLogoUploading(false);
-      toast.error("Failed to upload logo");
+      toast.error("فشل رفع الشعار");
     }
   };
 
@@ -163,7 +163,7 @@ export default function Settings() {
                 <div className="flex items-center gap-4">
                   <div className="w-20 h-20 rounded-xl border-2 border-dashed border-border flex items-center justify-center bg-muted/30 overflow-hidden flex-shrink-0">
                     {logoPreview ? (
-                      <img src={logoPreview} alt="Clinic logo" className="w-full h-full object-contain" />
+                      <img src={logoPreview} alt="شعار العيادة" className="w-full h-full object-contain" />
                     ) : (
                       <Camera className="w-8 h-8 text-muted-foreground opacity-40" />
                     )}
@@ -172,7 +172,7 @@ export default function Settings() {
                     <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
                     <Button variant="outline" size="sm" className="gap-2 h-8" onClick={() => logoInputRef.current?.click()} disabled={!isAdmin || logoUploading}>
                       <Upload className="w-3.5 h-3.5" />
-                      {logoUploading ? "Uploading..." : "Upload Logo"}
+                      {logoUploading ? "جاري الرفع..." : "رفع الشعار"}
                     </Button>
                     {logoPreview && (
                       <Button variant="ghost" size="sm" className="gap-2 h-8 text-destructive hover:text-destructive" onClick={() => { setLogoPreview(null); if (isAdmin) upsertMutation.mutate({ key: SETTING_KEYS.clinicLogo, value: "" }); }}>
@@ -201,14 +201,14 @@ export default function Settings() {
                 </div>
                 <div className="sm:col-span-2 space-y-1.5">
                   <Label>العنوان</Label>
-                  <Textarea value={clinic.address} onChange={(e) => setClinic({ ...clinic, address: e.target.value })} rows={2} placeholder="Full clinic address" disabled={!isAdmin} />
+                  <Textarea value={clinic.address} onChange={(e) => setClinic({ ...clinic, address: e.target.value })} rows={2} placeholder="عنوان العيادة الكامل" disabled={!isAdmin} />
                 </div>
               </div>
 
               {isAdmin && (
                 <div className="flex justify-end">
                   <Button onClick={saveClinic} disabled={upsertManyMutation.isPending} className="gap-2">
-                    <Save className="w-4 h-4" /> {upsertManyMutation.isPending ? "جاري الحفظ..." : "Save Clinic Info"}
+                    <Save className="w-4 h-4" /> {upsertManyMutation.isPending ? "جاري الحفظ..." : "حفظ معلومات العيادة"}
                   </Button>
                 </div>
               )}
@@ -227,7 +227,7 @@ export default function Settings() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2 space-y-1.5">
                   <Label>اسم الطبيب</Label>
-                  <Input value={doctor.name} onChange={(e) => setDoctor({ ...doctor, name: e.target.value })} placeholder="Dr. John Smith" disabled={!isAdmin} />
+                  <Input value={doctor.name} onChange={(e) => setDoctor({ ...doctor, name: e.target.value })} placeholder="د. محمد أحمد" disabled={!isAdmin} />
                 </div>
                 <div className="space-y-1.5">
                   <Label>التخصص</Label>
@@ -245,7 +245,7 @@ export default function Settings() {
               {isAdmin && (
                 <div className="flex justify-end">
                   <Button onClick={saveDoctor} disabled={upsertManyMutation.isPending} className="gap-2">
-                    <Save className="w-4 h-4" /> {upsertManyMutation.isPending ? "جاري الحفظ..." : "Save Doctor Info"}
+                    <Save className="w-4 h-4" /> {upsertManyMutation.isPending ? "جاري الحفظ..." : "حفظ معلومات الطبيب"}
                   </Button>
                 </div>
               )}
