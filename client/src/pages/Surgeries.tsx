@@ -122,7 +122,7 @@ export default function Surgeries() {
     });
   };
 
-  const patientList = (patients as any)?.patients ?? patients ?? [];
+  const patientList = (patients as any)?.data ?? (patients as any)?.patients ?? [];
 
   const filtered = (surgeries ?? []).filter((s: any) => {
     const matchSearch = !search ||
