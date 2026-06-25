@@ -133,11 +133,11 @@ export default function Surgeries() {
     return matchSearch && matchStatus;
   });
 
-  const SurgeryFormFields = () => (
+  const formFields = (
     <div className="space-y-4 py-2">
       <div className="space-y-1.5">
         <Label>المريض *</Label>
-        <Select value={form.patientId} onValueChange={(v) => setForm({ ...form, patientId: v })}>
+        <Select value={form.patientId} onValueChange={(v) => setForm((f) => ({ ...f, patientId: v }))}>
           <SelectTrigger><SelectValue placeholder="اختر المريض" /></SelectTrigger>
           <SelectContent>
             {patientList.map((p: any) => (
@@ -149,7 +149,7 @@ export default function Surgeries() {
 
       <div className="space-y-1.5">
         <Label>نوع العملية *</Label>
-        <Select value={form.surgeryTypeId} onValueChange={(v) => setForm({ ...form, surgeryTypeId: v })}>
+        <Select value={form.surgeryTypeId} onValueChange={(v) => setForm((f) => ({ ...f, surgeryTypeId: v }))}>
           <SelectTrigger><SelectValue placeholder="اختر نوع العملية" /></SelectTrigger>
           <SelectContent>
             {(surgeryTypes ?? []).length === 0 ? (
@@ -165,7 +165,7 @@ export default function Surgeries() {
 
       <div className="space-y-1.5">
         <Label>الطبيب *</Label>
-        <Select value={form.doctorId} onValueChange={(v) => setForm({ ...form, doctorId: v })}>
+        <Select value={form.doctorId} onValueChange={(v) => setForm((f) => ({ ...f, doctorId: v }))}>
           <SelectTrigger><SelectValue placeholder="اختر الطبيب" /></SelectTrigger>
           <SelectContent>
             {(doctors ?? []).length === 0 ? (
@@ -184,13 +184,13 @@ export default function Surgeries() {
         <Input
           type="datetime-local"
           value={form.surgeryDate}
-          onChange={(e) => setForm({ ...form, surgeryDate: e.target.value })}
+          onChange={(e) => setForm((f) => ({ ...f, surgeryDate: e.target.value }))}
         />
       </div>
 
       <div className="space-y-1.5">
         <Label>الحالة</Label>
-        <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as any })}>
+        <Select value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v as any }))}>
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="scheduled">مجدولة</SelectItem>
@@ -205,7 +205,7 @@ export default function Surgeries() {
         <Label>ملاحظات</Label>
         <Textarea
           value={form.notes}
-          onChange={(e) => setForm({ ...form, notes: e.target.value })}
+          onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
           rows={3}
           placeholder="أي ملاحظات خاصة بالعملية..."
         />
@@ -362,7 +362,7 @@ export default function Surgeries() {
               <Stethoscope className="w-5 h-5 text-primary" /> إضافة عملية جراحية
             </DialogTitle>
           </DialogHeader>
-          <SurgeryFormFields />
+          {formFields}
           <DialogFooter>
             <Button variant="outline" onClick={() => { setShowAdd(false); resetForm(); }}>إلغاء</Button>
             <Button onClick={handleCreate} disabled={createMutation.isPending}>
@@ -380,7 +380,7 @@ export default function Surgeries() {
               <Pencil className="w-5 h-5 text-primary" /> تعديل العملية الجراحية
             </DialogTitle>
           </DialogHeader>
-          <SurgeryFormFields />
+          {formFields}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditId(null)}>إلغاء</Button>
             <Button onClick={handleUpdate} disabled={updateMutation.isPending}>
