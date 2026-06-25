@@ -32,6 +32,8 @@ function formatDate(d: Date | string | null | undefined) {
   return new Date(d).toLocaleString("ar-EG", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
+const EMPTY_FORM = { patientId: "", doctorId: "", surgeryTypeId: "", surgeryDate: "", notes: "", status: "scheduled" as const };
+
 export default function Surgeries() {
   const utils = trpc.useUtils();
 
@@ -77,10 +79,9 @@ export default function Surgeries() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
 
-  const emptyForm = { patientId: "", doctorId: "", surgeryTypeId: "", surgeryDate: "", notes: "", status: "scheduled" as const };
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState({ ...EMPTY_FORM });
 
-  const resetForm = () => setForm(emptyForm);
+  const resetForm = () => setForm({ ...EMPTY_FORM });
 
   const openEdit = (s: any) => {
     setForm({
@@ -355,7 +356,7 @@ export default function Surgeries() {
       </Card>
 
       {/* Add Dialog */}
-      <Dialog open={showAdd} onOpenChange={(o) => { if (!o) { setShowAdd(false); resetForm(); } }}>
+      <Dialog open={showAdd} onOpenChange={(o) => { if (!o) { setShowAdd(false); resetForm(); } }} modal={false}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -373,7 +374,7 @@ export default function Surgeries() {
       </Dialog>
 
       {/* Edit Dialog */}
-      <Dialog open={editId !== null} onOpenChange={(o) => { if (!o) setEditId(null); }}>
+      <Dialog open={editId !== null} onOpenChange={(o) => { if (!o) setEditId(null); }} modal={false}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
