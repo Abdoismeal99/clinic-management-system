@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Stethoscope, Search, Calendar, User, Filter, X } from "lucide-react";
@@ -32,8 +32,118 @@ function formatDate(d: Date | string | null | undefined) {
   return new Date(d).toLocaleString("ar-EG", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
-const EMPTY_FORM = { patientId: "", doctorId: "", surgeryTypeId: "", surgeryDate: "", notes: "", status: "scheduled" as const };
+type FormState = {
+  patientId: string;
+  doctorId: string;
+  surgeryTypeId: string;
+  surgeryDate: string;
+  notes: string;
+  status: "scheduled" | "completed" | "cancelled" | "postponed";
+};
 
+const EMPTY_FORM: FormState = {
+  patientId: "",
+  doctorId: "",
+  surgeryTypeId: "",
+  surgeryDate: "",
+  notes: "",
+  status: "scheduled",
+};
+
+// ─── Standalone form component (outside Surgeries to avoid remount) ───────────
+function SurgeryForm({
+  form,
+  setForm,
+  patientList,
+  doctors,
+  surgeryTypes,
+}: {
+  form: FormState;
+  setForm: React.Dispatch<React.SetStateAction<FormState>>;
+  patientList: any[];
+  doctors: any[];
+  surgeryTypes: any[];
+}) {
+  return (
+    <div className="space-y-4 py-2">
+      <div className="space-y-1.5">
+        <Label>المريض *</Label>
+        <Select value={form.patientId} onValueChange={(v) => setForm((f) => ({ ...f, patientId: v }))}>
+          <SelectTrigger><SelectValue placeholder="اختر المريض" /></SelectTrigger>
+          <SelectContent>
+            {patientList.length === 0 ? (
+              <SelectItem value="_empty" disabled>لا يوجد مرضى</SelectItem>
+            ) : patientList.map((p: any) => (
+              <SelectItem key={p.id} value={String(p.id)}>{p.fullName} — {p.patientId}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>نوع العملية *</Label>
+        <Select value={form.surgeryTypeId} onValueChange={(v) => setForm((f) => ({ ...f, surgeryTypeId: v }))}>
+          <SelectTrigger><SelectValue placeholder="اختر نوع العملية" /></SelectTrigger>
+          <SelectContent>
+            {surgeryTypes.length === 0 ? (
+              <SelectItem value="_empty" disabled>لا توجد أنواع — أضفها من الإعدادات</SelectItem>
+            ) : surgeryTypes.map((t: any) => (
+              <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>الطبيب *</Label>
+        <Select value={form.doctorId} onValueChange={(v) => setForm((f) => ({ ...f, doctorId: v }))}>
+          <SelectTrigger><SelectValue placeholder="اختر الطبيب" /></SelectTrigger>
+          <SelectContent>
+            {doctors.length === 0 ? (
+              <SelectItem value="_empty" disabled>لا يوجد أطباء — أضفهم من الإعدادات</SelectItem>
+            ) : doctors.map((d: any) => (
+              <SelectItem key={d.id} value={String(d.id)}>{d.name}{d.specialty ? ` — ${d.specialty}` : ""}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>موعد العملية *</Label>
+        <Input
+          type="datetime-local"
+          value={form.surgeryDate}
+          onChange={(e) => setForm((f) => ({ ...f, surgeryDate: e.target.value }))}
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>الحالة</Label>
+        <Select value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v as FormState["status"] }))}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="scheduled">مجدولة</SelectItem>
+            <SelectItem value="completed">مكتملة</SelectItem>
+            <SelectItem value="cancelled">ملغاة</SelectItem>
+            <SelectItem value="postponed">مؤجلة</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>ملاحظات <span className="text-muted-foreground text-xs">(اختياري)</span></Label>
+        <Textarea
+          value={form.notes}
+          onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+          rows={3}
+          placeholder="أي ملاحظات خاصة بالعملية..."
+        />
+      </div>
+    </div>
+  );
+}
+
+// ─── Main page ────────────────────────────────────────────────────────────────
 export default function Surgeries() {
   const utils = trpc.useUtils();
 
@@ -48,7 +158,7 @@ export default function Surgeries() {
       utils.surgeries.list.invalidate();
       utils.surgeries.upcoming.invalidate();
       setShowAdd(false);
-      resetForm();
+      setForm({ ...EMPTY_FORM });
     },
     onError: (e) => toast.error(e.message),
   });
@@ -78,10 +188,11 @@ export default function Surgeries() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [form, setForm] = useState<FormState>({ ...EMPTY_FORM });
 
-  const [form, setForm] = useState({ ...EMPTY_FORM });
-
-  const resetForm = () => setForm({ ...EMPTY_FORM });
+  const patientList: any[] = (patients as any)?.data ?? (patients as any)?.patients ?? [];
+  const doctorList: any[] = (doctors as any) ?? [];
+  const typeList: any[] = (surgeryTypes as any) ?? [];
 
   const openEdit = (s: any) => {
     setForm({
@@ -97,7 +208,7 @@ export default function Surgeries() {
 
   const handleCreate = () => {
     if (!form.patientId || !form.doctorId || !form.surgeryTypeId || !form.surgeryDate) {
-      toast.error("يرجى تعبئة جميع الحقول المطلوبة");
+      toast.error("يرجى تعبئة الحقول المطلوبة: المريض، نوع العملية، الطبيب، والموعد");
       return;
     }
     createMutation.mutate({
@@ -123,8 +234,6 @@ export default function Surgeries() {
     });
   };
 
-  const patientList = (patients as any)?.data ?? (patients as any)?.patients ?? [];
-
   const filtered = (surgeries ?? []).filter((s: any) => {
     const matchSearch = !search ||
       (s.patientName ?? "").toLowerCase().includes(search.toLowerCase()) ||
@@ -133,86 +242,6 @@ export default function Surgeries() {
     const matchStatus = filterStatus === "all" || s.status === filterStatus;
     return matchSearch && matchStatus;
   });
-
-  const formFields = (
-    <div className="space-y-4 py-2">
-      <div className="space-y-1.5">
-        <Label>المريض *</Label>
-        <Select value={form.patientId} onValueChange={(v) => setForm((f) => ({ ...f, patientId: v }))}>
-          <SelectTrigger><SelectValue placeholder="اختر المريض" /></SelectTrigger>
-          <SelectContent>
-            {patientList.map((p: any) => (
-              <SelectItem key={p.id} value={String(p.id)}>{p.fullName} — {p.patientId}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label>نوع العملية *</Label>
-        <Select value={form.surgeryTypeId} onValueChange={(v) => setForm((f) => ({ ...f, surgeryTypeId: v }))}>
-          <SelectTrigger><SelectValue placeholder="اختر نوع العملية" /></SelectTrigger>
-          <SelectContent>
-            {(surgeryTypes ?? []).length === 0 ? (
-              <SelectItem value="_empty" disabled>لا توجد أنواع عمليات — أضفها من الإعدادات</SelectItem>
-            ) : (
-              (surgeryTypes ?? []).map((t: any) => (
-                <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
-              ))
-            )}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label>الطبيب *</Label>
-        <Select value={form.doctorId} onValueChange={(v) => setForm((f) => ({ ...f, doctorId: v }))}>
-          <SelectTrigger><SelectValue placeholder="اختر الطبيب" /></SelectTrigger>
-          <SelectContent>
-            {(doctors ?? []).length === 0 ? (
-              <SelectItem value="_empty" disabled>لا يوجد أطباء — أضفهم من الإعدادات</SelectItem>
-            ) : (
-              (doctors ?? []).map((d: any) => (
-                <SelectItem key={d.id} value={String(d.id)}>{d.name}{d.specialty ? ` — ${d.specialty}` : ""}</SelectItem>
-              ))
-            )}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label>موعد العملية *</Label>
-        <Input
-          type="datetime-local"
-          value={form.surgeryDate}
-          onChange={(e) => setForm((f) => ({ ...f, surgeryDate: e.target.value }))}
-        />
-      </div>
-
-      <div className="space-y-1.5">
-        <Label>الحالة</Label>
-        <Select value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v as any }))}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="scheduled">مجدولة</SelectItem>
-            <SelectItem value="completed">مكتملة</SelectItem>
-            <SelectItem value="cancelled">ملغاة</SelectItem>
-            <SelectItem value="postponed">مؤجلة</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label>ملاحظات</Label>
-        <Textarea
-          value={form.notes}
-          onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-          rows={3}
-          placeholder="أي ملاحظات خاصة بالعملية..."
-        />
-      </div>
-    </div>
-  );
 
   return (
     <div className="p-6 space-y-5">
@@ -224,7 +253,7 @@ export default function Surgeries() {
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">جدولة وإدارة مواعيد العمليات الجراحية</p>
         </div>
-        <Button className="gap-2" onClick={() => { resetForm(); setShowAdd(true); }}>
+        <Button className="gap-2" onClick={() => { setForm({ ...EMPTY_FORM }); setShowAdd(true); }}>
           <Plus className="w-4 h-4" /> إضافة عملية
         </Button>
       </div>
@@ -355,41 +384,57 @@ export default function Surgeries() {
         </CardContent>
       </Card>
 
-      {/* Add Dialog */}
-      <Dialog open={showAdd} onOpenChange={(o) => { if (!o) { setShowAdd(false); resetForm(); } }} modal={false}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+      {/* Add Sheet */}
+      <Sheet open={showAdd} onOpenChange={(o) => { if (!o) { setShowAdd(false); setForm({ ...EMPTY_FORM }); } }}>
+        <SheetContent side="left" className="w-full sm:max-w-lg overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
               <Stethoscope className="w-5 h-5 text-primary" /> إضافة عملية جراحية
-            </DialogTitle>
-          </DialogHeader>
-          {formFields}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setShowAdd(false); resetForm(); }}>إلغاء</Button>
+            </SheetTitle>
+          </SheetHeader>
+          <div className="mt-4">
+            <SurgeryForm
+              form={form}
+              setForm={setForm}
+              patientList={patientList}
+              doctors={doctorList}
+              surgeryTypes={typeList}
+            />
+          </div>
+          <SheetFooter className="mt-6 flex gap-2">
+            <Button variant="outline" onClick={() => { setShowAdd(false); setForm({ ...EMPTY_FORM }); }}>إلغاء</Button>
             <Button onClick={handleCreate} disabled={createMutation.isPending}>
               {createMutation.isPending ? "جاري الإضافة..." : "إضافة العملية"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
 
-      {/* Edit Dialog */}
-      <Dialog open={editId !== null} onOpenChange={(o) => { if (!o) setEditId(null); }} modal={false}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+      {/* Edit Sheet */}
+      <Sheet open={editId !== null} onOpenChange={(o) => { if (!o) setEditId(null); }}>
+        <SheetContent side="left" className="w-full sm:max-w-lg overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
               <Pencil className="w-5 h-5 text-primary" /> تعديل العملية الجراحية
-            </DialogTitle>
-          </DialogHeader>
-          {formFields}
-          <DialogFooter>
+            </SheetTitle>
+          </SheetHeader>
+          <div className="mt-4">
+            <SurgeryForm
+              form={form}
+              setForm={setForm}
+              patientList={patientList}
+              doctors={doctorList}
+              surgeryTypes={typeList}
+            />
+          </div>
+          <SheetFooter className="mt-6 flex gap-2">
             <Button variant="outline" onClick={() => setEditId(null)}>إلغاء</Button>
             <Button onClick={handleUpdate} disabled={updateMutation.isPending}>
               {updateMutation.isPending ? "جاري الحفظ..." : "حفظ التعديلات"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
 
       {/* Delete Confirm */}
       <AlertDialog open={deleteId !== null} onOpenChange={(o) => !o && setDeleteId(null)}>
