@@ -146,7 +146,7 @@ export default function VisitDetail() {
         </div>
       </div>
       <Dialog open={showEdit} onOpenChange={(v) => setShowEdit(v)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent aria-describedby={undefined} className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Edit Visit #{visit.id}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
             <div className="space-y-1.5"><Label>Visit Date *</Label><Input type="datetime-local" value={form.visitDate ?? ""} onChange={(e) => setForm({ ...form, visitDate: e.target.value })} /></div>

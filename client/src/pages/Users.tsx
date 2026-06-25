@@ -133,7 +133,7 @@ export default function Users() {
 
       {/* Edit Role Dialog */}
       <Dialog open={!!editUser} onOpenChange={(v) => !v && setEditUser(null)}>
-        <DialogContent className="max-w-sm">
+        <DialogContent aria-describedby={undefined} className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><Shield className="w-5 h-5 text-primary" /> Change Role</DialogTitle>
           </DialogHeader>

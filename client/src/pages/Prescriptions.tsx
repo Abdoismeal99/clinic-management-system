@@ -279,7 +279,7 @@ export default function Prescriptions() {
 
       {/* Create Prescription Dialog */}
       <Dialog open={showCreate} onOpenChange={(v) => setShowCreate(v)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent aria-describedby={undefined} className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle className="flex items-center gap-2"><Pill className="w-5 h-5 text-primary" /> New Prescription</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             {/* Patient */}
@@ -340,7 +340,7 @@ export default function Prescriptions() {
 
       {/* Create Template Dialog */}
       <Dialog open={showTemplate} onOpenChange={(v) => setShowTemplate(v)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent aria-describedby={undefined} className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle className="flex items-center gap-2"><BookTemplate className="w-5 h-5 text-primary" /> Save Prescription Template</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -388,7 +388,7 @@ export default function Prescriptions() {
 
       {/* Print Prescription Dialog */}
       <Dialog open={!!printRxId} onOpenChange={(v) => !v && setPrintRxId(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent aria-describedby={undefined} className="max-w-lg">
           <DialogHeader><DialogTitle>Prescription</DialogTitle></DialogHeader>
           {printRx && (
             <div ref={printRef} className="space-y-4 py-2">
@@ -425,7 +425,7 @@ export default function Prescriptions() {
 
       {/* Delete Prescription */}
       <Dialog open={!!deleteId} onOpenChange={(v) => !v && setDeleteId(null)}>
-        <DialogContent className="max-w-sm">
+        <DialogContent aria-describedby={undefined} className="max-w-sm">
           <DialogHeader><DialogTitle className="flex items-center gap-2"><AlertCircle className="w-5 h-5 text-destructive" /> Delete Prescription?</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">This prescription will be permanently removed.</p>
           <DialogFooter>
@@ -439,7 +439,7 @@ export default function Prescriptions() {
 
       {/* Delete Template */}
       <Dialog open={!!deleteTemplateId} onOpenChange={(v) => !v && setDeleteTemplateId(null)}>
-        <DialogContent className="max-w-sm">
+        <DialogContent aria-describedby={undefined} className="max-w-sm">
           <DialogHeader><DialogTitle className="flex items-center gap-2"><AlertCircle className="w-5 h-5 text-destructive" /> Delete Template?</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">This template will be permanently removed.</p>
           <DialogFooter>

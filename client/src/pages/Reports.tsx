@@ -61,7 +61,7 @@ export default function Reports() {
           <Card key={stat.label}>
             <CardContent className="p-4">
               <div className={`w-9 h-9 rounded-lg ${stat.bg} flex items-center justify-center mb-3`}>{stat.icon}</div>
-              <p className="text-2xl font-bold">{isLoading ? <Skeleton className="h-7 w-16" /> : stat.value}</p>
+              <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-7 w-16" /> : stat.value}</div>
               <p className="text-xs text-muted-foreground mt-0.5">{stat.label}</p>
             </CardContent>
           </Card>

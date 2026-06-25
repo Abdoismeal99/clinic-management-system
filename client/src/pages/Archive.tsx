@@ -113,7 +113,7 @@ export default function ArchivePage() {
 
       {/* Restore Confirmation */}
       <Dialog open={!!restoreId} onOpenChange={(v) => !v && setRestoreId(null)}>
-        <DialogContent className="max-w-sm">
+        <DialogContent aria-describedby={undefined} className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><RotateCcw className="w-5 h-5 text-primary" /> Restore Patient?</DialogTitle>
           </DialogHeader>

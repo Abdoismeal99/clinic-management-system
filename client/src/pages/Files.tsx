@@ -142,7 +142,7 @@ export default function Files() {
 
       {/* Upload Dialog */}
       <Dialog open={showUpload} onOpenChange={(v) => { setShowUpload(v); if (!v) setUploadFile(null); }}>
-        <DialogContent className="max-w-md">
+        <DialogContent aria-describedby={undefined} className="max-w-md">
           <DialogHeader><DialogTitle>Upload Medical File</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5"><Label>Patient *</Label><Select value={patientId.toString()} onValueChange={(v) => setPatientId(parseInt(v))}><SelectTrigger><SelectValue placeholder="Select patient" /></SelectTrigger><SelectContent>{patients?.data?.map((p) => <SelectItem key={p.id} value={p.id.toString()}>{p.fullName} ({p.patientId})</SelectItem>)}</SelectContent></Select></div>
@@ -173,7 +173,7 @@ export default function Files() {
 
       {/* Preview Dialog */}
       <Dialog open={!!previewUrl} onOpenChange={(v) => !v && setPreviewUrl(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh]">
+        <DialogContent aria-describedby={undefined} className="max-w-4xl max-h-[90vh]">
           <DialogHeader><DialogTitle className="truncate">{previewName}</DialogTitle></DialogHeader>
           <div className="flex-1 overflow-auto">
             {previewUrl && (previewUrl.includes("image") || previewName.match(/\.(jpg|jpeg|png|gif|webp)$/i)) ? (

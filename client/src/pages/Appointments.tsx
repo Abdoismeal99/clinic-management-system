@@ -170,7 +170,7 @@ export default function Appointments() {
 
       </> }
       <Dialog open={showForm} onOpenChange={(v) => { setShowForm(v); if (!v) setEditId(null); }}>
-        <DialogContent className="max-w-lg">
+        <DialogContent aria-describedby={undefined} className="max-w-lg">
           <DialogHeader><DialogTitle>{editId ? "Edit Appointment" : "Schedule Appointment"}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
             <div className="sm:col-span-2 space-y-1.5"><Label>Patient *</Label><Select value={form.patientId.toString()} onValueChange={(v) => setForm({ ...form, patientId: parseInt(v) })}><SelectTrigger><SelectValue placeholder="Select patient" /></SelectTrigger><SelectContent>{patients?.data?.map((p) => <SelectItem key={p.id} value={p.id.toString()}>{p.fullName} ({p.patientId})</SelectItem>)}</SelectContent></Select></div>
@@ -184,7 +184,7 @@ export default function Appointments() {
           <DialogFooter><Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button><Button onClick={handleSubmit} disabled={createMutation.isPending || updateMutation.isPending}>{createMutation.isPending || updateMutation.isPending ? "Saving..." : editId ? "Update" : "Schedule"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
-      <Dialog open={!!deleteId} onOpenChange={(v) => !v && setDeleteId(null)}><DialogContent className="max-w-sm"><DialogHeader><DialogTitle>Delete Appointment?</DialogTitle></DialogHeader><p className="text-sm text-muted-foreground">This action cannot be undone.</p><DialogFooter><Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button><Button variant="destructive" onClick={() => deleteId && deleteMutation.mutate({ id: deleteId })} disabled={deleteMutation.isPending}>{deleteMutation.isPending ? "Deleting..." : "Delete"}</Button></DialogFooter></DialogContent></Dialog>
+      <Dialog open={!!deleteId} onOpenChange={(v) => !v && setDeleteId(null)}><DialogContent aria-describedby={undefined} className="max-w-sm"><DialogHeader><DialogTitle>Delete Appointment?</DialogTitle></DialogHeader><p className="text-sm text-muted-foreground">This action cannot be undone.</p><DialogFooter><Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button><Button variant="destructive" onClick={() => deleteId && deleteMutation.mutate({ id: deleteId })} disabled={deleteMutation.isPending}>{deleteMutation.isPending ? "Deleting..." : "Delete"}</Button></DialogFooter></DialogContent></Dialog>
     </div>
   );
 }

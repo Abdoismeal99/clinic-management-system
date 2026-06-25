@@ -566,7 +566,7 @@ export default function PatientProfile() {
 
       {/* Edit Patient Dialog */}
       <Dialog open={showEdit} onOpenChange={(v) => setShowEdit(v)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent aria-describedby={undefined} className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Edit Patient — {patient.fullName}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
             <div className="sm:col-span-2 space-y-1.5"><Label>Full Name *</Label><Input value={editForm.fullName ?? ""} onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })} /></div>
@@ -610,7 +610,7 @@ export default function PatientProfile() {
 
       {/* Delete Visit Confirm */}
       <Dialog open={!!deleteVisitId} onOpenChange={(v) => !v && setDeleteVisitId(null)}>
-        <DialogContent className="max-w-sm">
+        <DialogContent aria-describedby={undefined} className="max-w-sm">
           <DialogHeader><DialogTitle>Delete Visit?</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">This visit will be permanently removed from the patient's record.</p>
           <DialogFooter>
@@ -624,7 +624,7 @@ export default function PatientProfile() {
 
       {/* Delete Prescription Confirm */}
       <Dialog open={!!deletePrescId} onOpenChange={(v) => !v && setDeletePrescId(null)}>
-        <DialogContent className="max-w-sm">
+        <DialogContent aria-describedby={undefined} className="max-w-sm">
           <DialogHeader><DialogTitle>Delete Prescription?</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">This prescription will be permanently removed.</p>
           <DialogFooter>
@@ -638,7 +638,7 @@ export default function PatientProfile() {
 
       {/* Delete File Confirm */}
       <Dialog open={!!deleteFileId} onOpenChange={(v) => !v && setDeleteFileId(null)}>
-        <DialogContent className="max-w-sm">
+        <DialogContent aria-describedby={undefined} className="max-w-sm">
           <DialogHeader><DialogTitle>Delete File?</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">This file will be permanently removed.</p>
           <DialogFooter>
@@ -652,7 +652,7 @@ export default function PatientProfile() {
 
       {/* File Preview */}
       <Dialog open={!!previewUrl} onOpenChange={(v) => !v && setPreviewUrl(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh]">
+        <DialogContent aria-describedby={undefined} className="max-w-4xl max-h-[90vh]">
           <DialogHeader><DialogTitle className="truncate">{previewName}</DialogTitle></DialogHeader>
           <div className="overflow-auto">
             {previewUrl && isImageFile(previewName) ? (
