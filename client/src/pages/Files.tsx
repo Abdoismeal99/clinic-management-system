@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { FileText, Upload, Trash2, Download, Eye, Image, X, CloudUpload } from "lucide-react";
+import { FileText, Upload, Trash2, Download, Eye, Image, X, CloudUpload, PenLine } from "lucide-react";
+import ImageAnnotator from "@/components/ImageAnnotator";
 import { format } from "date-fns";
 import { FILE_CATEGORY_LABELS } from "@/lib/types";
 
@@ -30,6 +31,8 @@ export default function Files() {
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewName, setPreviewName] = useState("");
+  const [annotateUrl, setAnnotateUrl] = useState<string | null>(null);
+  const [annotateName, setAnnotateName] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { data: patients } = trpc.patients.list.useQuery({ limit: 200 });
@@ -62,6 +65,14 @@ export default function Files() {
     } finally {
       setUploading(false);
     }
+  };
+  const isImageFile = (name: string) => /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(name);
+  const handleAnnotate = async (fileId: number, name: string) => {
+    try {
+      const result = await utils.files.getPresignedUrl.fetch({ id: fileId });
+      setAnnotateUrl(result.url);
+      setAnnotateName(name);
+    } catch { toast.error("Could not load file for annotation"); }
   };
   const handlePreview = async (fileId: number, name: string) => {
     try {
@@ -119,6 +130,7 @@ export default function Files() {
                 </div>
                 <div className="flex items-center gap-1 mt-3">
                   {f.presignedUrl && <Button variant="outline" size="sm" className="h-7 gap-1 text-xs flex-1" onClick={() => handlePreview(f.id, f.originalName)}><Eye className="w-3 h-3" /> Preview</Button>}
+                  {f.presignedUrl && isImageFile(f.originalName) && <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" title="Annotate image" onClick={() => handleAnnotate(f.id, f.originalName)}><PenLine className="w-3 h-3" /></Button>}
                   {f.presignedUrl && <a href={f.presignedUrl} download={f.originalName} target="_blank" rel="noreferrer"><Button variant="outline" size="sm" className="h-7 gap-1 text-xs"><Download className="w-3 h-3" /></Button></a>}
                   {canUpload && <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-destructive hover:text-destructive" onClick={() => deleteMutation.mutate({ id: f.id })}><Trash2 className="w-3 h-3" /></Button>}
                 </div>
@@ -148,6 +160,16 @@ export default function Files() {
           <DialogFooter><Button variant="outline" onClick={() => setShowUpload(false)}>Cancel</Button><Button onClick={handleUpload} disabled={uploading || !uploadFile}>{uploading ? "Uploading..." : "Upload"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Image Annotator */}
+      {annotateUrl && (
+        <ImageAnnotator
+          imageUrl={annotateUrl}
+          fileName={annotateName}
+          open={!!annotateUrl}
+          onClose={() => { setAnnotateUrl(null); setAnnotateName(""); }}
+        />
+      )}
 
       {/* Preview Dialog */}
       <Dialog open={!!previewUrl} onOpenChange={(v) => !v && setPreviewUrl(null)}>

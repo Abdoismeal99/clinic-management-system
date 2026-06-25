@@ -65,8 +65,8 @@
 - [x] Drug history per patient
 
 ## Frontend - Appointments
-- [x] Appointments list view with filters
-- [ ] Calendar view (list view implemented; full calendar widget is future enhancement)
+- [x] Appointments calendar view with filters
+- [x] Calendar view (both list and calendar grid views implemented)
 - [x] Add/Edit appointment form
 - [x] Status management (Pending/Completed/Cancelled)
 
@@ -76,7 +76,7 @@
 - [x] File preview (images and PDFs)
 - [x] Download with presigned URL
 - [x] Delete file
-- [ ] Image annotation tool (draw, highlight, circle, arrow, notes) — future enhancement
+- [x] Image annotation tool (pen, highlight, circle, arrow, text, undo, clear, download) (draw, highlight, circle, arrow, notes) — future enhancement
 
 ## Frontend - Search & Filters
 - [x] Global search bar in header
