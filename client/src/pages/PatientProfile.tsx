@@ -106,9 +106,9 @@ export default function PatientProfile() {
 
   const handlePrint = () => window.print();
 
-  const canEdit = user?.role === "admin" || user?.role === "doctor" || user?.role === "assistant";
-  const canDel = user?.role ? canDelete(user.role as any) : false;
-  const canManageRx = user?.role ? canManageVisits(user.role as any) : false;
+  const canEdit = true;
+  const canDel = true;
+  const canManageRx = true;
 
   const age = patient?.dateOfBirth ? differenceInYears(new Date(), new Date(patient.dateOfBirth)) : null;
 

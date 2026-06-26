@@ -101,9 +101,7 @@ export default function Patients() {
           <Link href="/patients/archive">
             <Button variant="outline" size="sm" className="gap-2 h-9"><Archive className="w-4 h-4" /> الأرشيف</Button>
           </Link>
-          {canManagePatients(role as any) && (
-            <Button onClick={openCreate} size="sm" className="gap-2 h-9"><Plus className="w-4 h-4" /> مريض جديد</Button>
-          )}
+          <Button onClick={openCreate} size="sm" className="gap-2 h-9"><Plus className="w-4 h-4" /> مريض جديد</Button>
         </div>
       </div>
 
@@ -215,12 +213,8 @@ export default function Patients() {
                             <Link href={`/patients/${p.id}`}>
                               <Button variant="ghost" size="sm" className="h-7 w-7 p-0"><Eye className="w-3.5 h-3.5" /></Button>
                             </Link>
-                            {canManagePatients(role as any) && (
-                              <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEdit(p)}><Pencil className="w-3.5 h-3.5" /></Button>
-                            )}
-                            {canDelete(role as any) && (
-                              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive hover:text-destructive" onClick={() => setDeleteId(p.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
-                            )}
+                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEdit(p)}><Pencil className="w-3.5 h-3.5" /></Button>
+                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive hover:text-destructive" onClick={() => setDeleteId(p.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
                           </div>
                         </td>
                       </tr>
