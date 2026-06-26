@@ -31,6 +31,7 @@ const EMPTY_FORM = {
   medicalNotes: "", tags: [] as string[], status: "new" as const,
 };
 
+
 export default function Patients() {
   const { user } = useAuth();
   const utils = trpc.useUtils();
@@ -244,40 +245,64 @@ export default function Patients() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
           <DialogHeader><DialogTitle>{editId ? "تعديل بيانات المريض" : "إضافة مريض جديد"}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2" dir="rtl">
-            <div className="sm:col-span-2 space-y-1.5"><Label>الاسم الكامل *</Label><Input value={form.fullName} onChange={e => setForm({ ...form, fullName: e.target.value })} placeholder="أدخل الاسم الكامل" /></div>
-            <div className="space-y-1.5"><Label>الجنس *</Label>
+            {/* الاسم — ضروري */}
+            <div className="sm:col-span-2 space-y-1.5">
+              <Label>الاسم الكامل <span className="text-destructive">*</span></Label>
+              <Input value={form.fullName} onChange={e => setForm({ ...form, fullName: e.target.value })} placeholder="أدخل الاسم الكامل" />
+            </div>
+            {/* الجنس — ذكر / أنثى فقط */}
+            <div className="space-y-1.5">
+              <Label>الجنس</Label>
               <Select value={form.gender} onValueChange={v => setForm({ ...form, gender: v as any })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="male">ذكر</SelectItem><SelectItem value="female">أنثى</SelectItem><SelectItem value="other">آخر</SelectItem></SelectContent>
+                <SelectContent>
+                  <SelectItem value="male">ذكر</SelectItem>
+                  <SelectItem value="female">أنثى</SelectItem>
+                </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5"><Label>تاريخ الميلاد</Label><Input type="date" value={form.dateOfBirth} onChange={e => setForm({ ...form, dateOfBirth: e.target.value })} /></div>
-            <div className="space-y-1.5"><Label>رقم الهاتف</Label><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="05xxxxxxxx" /></div>
-            <div className="space-y-1.5"><Label>المهنة</Label><Input value={form.occupation} onChange={e => setForm({ ...form, occupation: e.target.value })} /></div>
-            <div className="space-y-1.5"><Label>فصيلة الدم</Label>
+            {/* فصيلة الدم */}
+            <div className="space-y-1.5">
+              <Label>فصيلة الدم</Label>
               <Select value={form.bloodType} onValueChange={v => setForm({ ...form, bloodType: v as any })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{BLOOD_TYPES.map(bt => <SelectItem key={bt} value={bt}>{bt === "unknown" ? "غير معروف" : bt}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5"><Label>الحالة</Label>
+            {/* تاريخ الميلاد */}
+            <div className="space-y-1.5">
+              <Label>تاريخ الميلاد</Label>
+              <Input type="date" value={form.dateOfBirth} onChange={e => setForm({ ...form, dateOfBirth: e.target.value })} />
+            </div>
+            {/* الحالة */}
+            <div className="space-y-1.5">
+              <Label>الحالة</Label>
               <Select value={form.status} onValueChange={v => setForm({ ...form, status: v as any })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="new">جديد</SelectItem><SelectItem value="follow-up">متابعة</SelectItem><SelectItem value="stable">مستقر</SelectItem><SelectItem value="critical">حرج</SelectItem></SelectContent>
+                <SelectContent>
+                  <SelectItem value="new">جديد</SelectItem>
+                  <SelectItem value="follow-up">متابعة</SelectItem>
+                  <SelectItem value="stable">مستقر</SelectItem>
+                  <SelectItem value="critical">حرج</SelectItem>
+                </SelectContent>
               </Select>
             </div>
-            <div className="sm:col-span-2 space-y-1.5"><Label>العنوان</Label><Input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} /></div>
-            <div className="sm:col-span-2 space-y-1.5"><Label>الحساسيات</Label><Input value={form.allergies} onChange={e => setForm({ ...form, allergies: e.target.value })} placeholder="مثال: البنسلين" /></div>
-            <div className="sm:col-span-2 space-y-1.5"><Label>الأمراض المزمنة</Label><Input value={form.chronicDiseases} onChange={e => setForm({ ...form, chronicDiseases: e.target.value })} placeholder="مثال: السكري، ضغط الدم" /></div>
-            <div className="space-y-1.5"><Label>جهة الاتصال الطارئة</Label><Input value={form.emergencyContactName} onChange={e => setForm({ ...form, emergencyContactName: e.target.value })} /></div>
-            <div className="space-y-1.5"><Label>هاتف الطوارئ</Label><Input value={form.emergencyContactPhone} onChange={e => setForm({ ...form, emergencyContactPhone: e.target.value })} /></div>
-            <div className="space-y-1.5"><Label>صلة القرابة</Label><Input value={form.emergencyContactRelation} onChange={e => setForm({ ...form, emergencyContactRelation: e.target.value })} placeholder="مثال: زوج/زوجة" /></div>
+            {/* الأمراض المزمنة */}
+            <div className="sm:col-span-2 space-y-1.5">
+              <Label>الأمراض المزمنة</Label>
+              <Input value={form.chronicDiseases} onChange={e => setForm({ ...form, chronicDiseases: e.target.value })} placeholder="مثال: السكري، ضغط الدم" />
+            </div>
+            {/* التاجات */}
             <div className="sm:col-span-2 space-y-1.5">
               <Label className="flex items-center gap-1.5"><Tag className="w-3.5 h-3.5" /> التاجات</Label>
               <TagInput value={form.tags} onChange={tags => setForm({ ...form, tags })} placeholder="أضف تاج (مثال: سكري، ضغط)..." />
               <p className="text-xs text-muted-foreground">اضغط Enter أو فاصلة لإضافة تاج جديد</p>
             </div>
-            <div className="sm:col-span-2 space-y-1.5"><Label>ملاحظات طبية</Label><Textarea value={form.medicalNotes} onChange={e => setForm({ ...form, medicalNotes: e.target.value })} rows={3} /></div>
+            {/* الملاحظات الطبية */}
+            <div className="sm:col-span-2 space-y-1.5">
+              <Label>الملاحظات الطبية</Label>
+              <Textarea value={form.medicalNotes} onChange={e => setForm({ ...form, medicalNotes: e.target.value })} rows={3} placeholder="أي ملاحظات طبية إضافية..." />
+            </div>
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowForm(false)}>إلغاء</Button>
