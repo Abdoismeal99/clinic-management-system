@@ -33,7 +33,7 @@ export default function ArchivePage() {
     onError: (e) => toast.error(e.message),
   });
 
-  const canRestore = user?.role === "admin" || user?.role === "doctor" || (user as any)?.tenantRole === "clinic_admin";
+  const canRestore = true; // All users can restore
 
   return (
     <div className="p-6 space-y-5">
