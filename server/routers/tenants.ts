@@ -174,11 +174,8 @@ export const tenantsRouter = router({
 
       const tenant = result[0];
       if (!tenant) throw new TRPCError({ code: "NOT_FOUND", message: "رابط التفعيل غير صحيح" });
-      if (tenant.activationTokenExpiresAt && tenant.activationTokenExpiresAt < new Date()) {
+      if (tenant.activationTokenExpiresAt && tenant.activationTokenExpiresAt < new Date() && tenant.status !== "active") {
         throw new TRPCError({ code: "BAD_REQUEST", message: "رابط التفعيل انتهت صلاحيته" });
-      }
-      if (tenant.status === "active") {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "هذا الحساب مفعّل بالفعل" });
       }
 
       return {
@@ -188,6 +185,7 @@ export const tenantsRouter = router({
         plan: tenant.plan,
         planLabel: getPlanLabel(tenant.plan),
         expiresAt: tenant.expiresAt,
+        alreadyActive: tenant.status === "active",
       };
     }),
 
@@ -204,15 +202,19 @@ export const tenantsRouter = router({
 
       const tenant = result[0];
       if (!tenant) throw new TRPCError({ code: "NOT_FOUND", message: "رابط التفعيل غير صحيح" });
+      // If already active, just return success (idempotent)
+      if (tenant.status === "active") {
+        return { success: true, clinicName: tenant.clinicName, expiresAt: tenant.expiresAt };
+      }
       if (tenant.activationTokenExpiresAt && tenant.activationTokenExpiresAt < new Date()) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "رابط التفعيل انتهت صلاحيته" });
       }
 
+      // Keep the token so the link remains valid for future logins
       await db.update(tenants).set({
         status: "active",
         activatedAt: new Date(),
-        activationToken: null,
-        activationTokenExpiresAt: null,
+        // Do NOT delete activationToken - keep it so the link works permanently
       }).where(eq(tenants.id, tenant.id));
 
       return { success: true, clinicName: tenant.clinicName, expiresAt: tenant.expiresAt };

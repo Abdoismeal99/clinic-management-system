@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Clock, Loader2, Stethoscope } from "lucide-react";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 function getTokenFromUrl(): string | null {
   const params = new URLSearchParams(window.location.search);
@@ -13,6 +14,7 @@ export default function Activate() {
   const token = getTokenFromUrl();
   const [, navigate] = useLocation();
   const [activated, setActivated] = useState(false);
+  const { isAuthenticated, loading: authLoading } = useAuth();
 
   const { data: tenant, isLoading, error } = trpc.tenants.validateToken.useQuery(
     { token: token ?? "" },
@@ -22,6 +24,20 @@ export default function Activate() {
   const activateMutation = trpc.tenants.activate.useMutation({
     onSuccess: () => setActivated(true),
   });
+
+  // If already active and user is logged in, go straight to dashboard
+  useEffect(() => {
+    if (tenant?.alreadyActive && isAuthenticated && !authLoading) {
+      navigate("/");
+    }
+  }, [tenant, isAuthenticated, authLoading]);
+
+  // If already active but not logged in, redirect to Google login with return URL
+  useEffect(() => {
+    if (tenant?.alreadyActive && !isAuthenticated && !authLoading) {
+      window.location.href = `/api/auth/google?returnTo=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+    }
+  }, [tenant, isAuthenticated, authLoading]);
 
   if (!token) {
     return (

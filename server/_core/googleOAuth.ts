@@ -17,7 +17,10 @@ const REDIRECT_URI = `${APP_BASE_URL}/api/auth/google/callback`;
 
 export function registerGoogleOAuthRoutes(app: Express) {
   // Step 1: Redirect user to Google
-  app.get("/api/auth/google", (_req: Request, res: Response) => {
+  app.get("/api/auth/google", (req: Request, res: Response) => {
+    // Support returnTo so activation links work after login
+    const returnTo = typeof req.query.returnTo === "string" ? req.query.returnTo : null;
+    const state = returnTo ? Buffer.from(JSON.stringify({ returnTo })).toString("base64") : undefined;
     const params = new URLSearchParams({
       client_id: GOOGLE_CLIENT_ID,
       redirect_uri: REDIRECT_URI,
@@ -25,6 +28,7 @@ export function registerGoogleOAuthRoutes(app: Express) {
       scope: "openid email profile",
       access_type: "offline",
       prompt: "select_account",
+      ...(state ? { state } : {}),
     });
     console.log("[Google OAuth] Redirecting with redirect_uri:", REDIRECT_URI);
     res.redirect(302, `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`);
@@ -91,7 +95,20 @@ export function registerGoogleOAuthRoutes(app: Express) {
 
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-      res.redirect(302, "/");
+
+      // Redirect back to returnTo if provided via state
+      let redirectTo = "/";
+      try {
+        const stateParam = typeof req.query.state === "string" ? req.query.state : null;
+        if (stateParam) {
+          const stateObj = JSON.parse(Buffer.from(stateParam, "base64").toString());
+          if (stateObj.returnTo && typeof stateObj.returnTo === "string" && stateObj.returnTo.startsWith("/")) {
+            redirectTo = stateObj.returnTo;
+          }
+        }
+      } catch {}
+
+      res.redirect(302, redirectTo);
     } catch (err: any) {
       console.error("[Google OAuth] Callback failed:", err?.response?.data ?? err?.message ?? err);
       res.redirect(302, "/?error=auth_failed");
