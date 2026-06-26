@@ -2,19 +2,32 @@ import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import {
   getDoctorStats, getMonthlyPatientStats, getMonthlyVisitStats,
-  getPatientStatusStats, getTopDiagnoses, getAllUsers,
+  getPatientStatusStats, getTopDiagnoses, getAllUsers, getTenantId,
 } from "../db";
 import { invokeLLM } from "../_core/llm";
 
 export const reportsRouter = router({
-  monthlyPatients: protectedProcedure.query(() => getMonthlyPatientStats()),
-  monthlyVisits: protectedProcedure.query(() => getMonthlyVisitStats()),
+  monthlyPatients: protectedProcedure.query(async ({ ctx }) => {
+    const tenantId = (await getTenantId(ctx.user.email)) ?? undefined;
+    return getMonthlyPatientStats(tenantId);
+  }),
+  monthlyVisits: protectedProcedure.query(async ({ ctx }) => {
+    const tenantId = (await getTenantId(ctx.user.email)) ?? undefined;
+    return getMonthlyVisitStats(tenantId);
+  }),
   topDiagnoses: protectedProcedure
     .input(z.object({ limit: z.number().optional() }))
-    .query(({ input }) => getTopDiagnoses(input.limit)),
-  patientStatus: protectedProcedure.query(() => getPatientStatusStats()),
-  doctorStats: protectedProcedure.query(async () => {
-    const [stats, doctors] = await Promise.all([getDoctorStats(), getAllUsers()]);
+    .query(async ({ input, ctx }) => {
+      const tenantId = (await getTenantId(ctx.user.email)) ?? undefined;
+      return getTopDiagnoses(input.limit, tenantId);
+    }),
+  patientStatus: protectedProcedure.query(async ({ ctx }) => {
+    const tenantId = (await getTenantId(ctx.user.email)) ?? undefined;
+    return getPatientStatusStats(tenantId);
+  }),
+  doctorStats: protectedProcedure.query(async ({ ctx }) => {
+    const tenantId = (await getTenantId(ctx.user.email)) ?? undefined;
+    const [stats, doctors] = await Promise.all([getDoctorStats(tenantId), getAllUsers()]);
     return stats.map((s) => {
       const doctor = doctors.find((d) => d.id === s.doctorId);
       return { ...s, doctorName: doctor?.name ?? `Doctor #${s.doctorId}` };

@@ -1,6 +1,8 @@
-import { MessageCircle, Stethoscope, Clock, Shield, Zap } from "lucide-react";
+import { MessageCircle, Stethoscope, Clock, Shield, Zap, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { getLoginUrl } from "@/const";
+import { trpc } from "@/lib/trpc";
 
 const WHATSAPP_NUMBER = "201500663131"; // 01500663131 with country code
 
@@ -13,6 +15,11 @@ function buildWhatsAppLink(email: string, name: string) {
 
 export default function NotSubscribed() {
   const { user } = useAuth();
+  const logoutMutation = trpc.auth.logout.useMutation({
+    onSuccess: () => {
+      window.location.href = getLoginUrl();
+    },
+  });
 
   const whatsappLink = buildWhatsAppLink(
     user?.email ?? "غير معروف",
@@ -82,6 +89,23 @@ export default function NotSubscribed() {
         <p className="text-xs text-muted-foreground">
           سيتم الرد عليك في أقرب وقت وإرسال رابط التفعيل على إيميلك
         </p>
+
+        {/* Switch Account */}
+        <div className="border-t border-border pt-4">
+          <p className="text-xs text-muted-foreground mb-3">
+            هل تريد تسجيل الدخول بحساب مختلف؟
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 text-muted-foreground"
+            onClick={() => logoutMutation.mutate()}
+            disabled={logoutMutation.isPending}
+          >
+            <LogOut className="w-4 h-4" />
+            {logoutMutation.isPending ? "جاري تسجيل الخروج..." : "تسجيل الخروج وتغيير الحساب"}
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ import {
   createPatient, generatePatientId, getPatientById, getPatients,
   restorePatient, softDeletePatient, updatePatient, logActivity,
   getVisitsByPatient, getPrescriptionsByPatient, getFilesByPatient, getAppointments,
+  getTenantId,
 } from "../db";
 
 const patientInput = z.object({
@@ -36,14 +37,16 @@ export const patientsRouter = router({
       page: z.number().optional(),
       limit: z.number().optional(),
     }))
-    .query(async ({ input }) => {
-      return getPatients(input);
+    .query(async ({ input, ctx }) => {
+      const tenantId = await getTenantId(ctx.user.email) ?? 1;
+      return getPatients({ ...input, tenantId });
     }),
 
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ input }) => {
-      const patient = await getPatientById(input.id);
+    .query(async ({ input, ctx }) => {
+      const tenantId = await getTenantId(ctx.user.email) ?? 1;
+      const patient = await getPatientById(input.id, tenantId);
       if (!patient) throw new TRPCError({ code: "NOT_FOUND", message: "Patient not found" });
       return patient;
     }),
@@ -55,10 +58,12 @@ export const patientsRouter = router({
       if (role !== "admin" && role !== "doctor" && role !== "assistant") {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
+      const tenantId = await getTenantId(ctx.user.email) ?? 1;
       const patientId = await generatePatientId();
       const id = await createPatient({
         ...input,
         patientId,
+        tenantId,
         gender: input.gender,
         status: input.status ?? "new",
         dateOfBirth: input.dateOfBirth ? new Date(input.dateOfBirth) : null,
@@ -67,6 +72,7 @@ export const patientsRouter = router({
       });
       await logActivity({
         userId: ctx.user.id,
+        tenantId,
         action: "patient_created",
         entityType: "patient",
         entityId: id,
@@ -82,6 +88,7 @@ export const patientsRouter = router({
       if (role !== "admin" && role !== "doctor" && role !== "assistant") {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
+      const tenantId = await getTenantId(ctx.user.email) ?? 1;
       const { id, ...data } = input;
       await updatePatient(id, {
         ...data,
@@ -90,6 +97,7 @@ export const patientsRouter = router({
       }, ctx.user.id);
       await logActivity({
         userId: ctx.user.id,
+        tenantId,
         action: "patient_updated",
         entityType: "patient",
         entityId: id,
@@ -104,9 +112,11 @@ export const patientsRouter = router({
       if (ctx.user.role !== "admin" && ctx.user.role !== "doctor") {
         throw new TRPCError({ code: "FORBIDDEN", message: "Only admins and doctors can delete patients" });
       }
+      const tenantId = await getTenantId(ctx.user.email) ?? 1;
       await softDeletePatient(input.id, ctx.user.id);
       await logActivity({
         userId: ctx.user.id,
+        tenantId,
         action: "patient_deleted",
         entityType: "patient",
         entityId: input.id,
@@ -121,9 +131,11 @@ export const patientsRouter = router({
       if (ctx.user.role !== "admin" && ctx.user.role !== "doctor") {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
+      const tenantId = await getTenantId(ctx.user.email) ?? 1;
       await restorePatient(input.id);
       await logActivity({
         userId: ctx.user.id,
+        tenantId,
         action: "patient_restored",
         entityType: "patient",
         entityId: input.id,
@@ -134,14 +146,15 @@ export const patientsRouter = router({
 
   exportData: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ input }) => {
-      const patient = await getPatientById(input.id);
+    .query(async ({ input, ctx }) => {
+      const tenantId = await getTenantId(ctx.user.email) ?? 1;
+      const patient = await getPatientById(input.id, tenantId);
       if (!patient) throw new TRPCError({ code: "NOT_FOUND", message: "Patient not found" });
       const [visits, prescriptions, files, appointmentsResult] = await Promise.all([
         getVisitsByPatient(input.id),
         getPrescriptionsByPatient(input.id),
         getFilesByPatient(input.id),
-        getAppointments({ patientId: input.id, limit: 100 }),
+        getAppointments({ patientId: input.id, limit: 100, tenantId }),
       ]);
       return {
         patient,

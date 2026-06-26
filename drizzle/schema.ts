@@ -34,6 +34,7 @@ export type InsertUser = typeof users.$inferInsert;
 // ─── Patients ─────────────────────────────────────────────────────────────────
 export const patients = mysqlTable("patients", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull().default(1),
   patientId: varchar("patientId", { length: 16 }).notNull().unique(),
   fullName: varchar("fullName", { length: 256 }).notNull(),
   gender: mysqlEnum("gender", ["male", "female", "other"]).notNull(),
@@ -70,7 +71,8 @@ export type InsertPatient = typeof patients.$inferInsert;
 // ─── Diagnoses / Tags ─────────────────────────────────────────────────────────
 export const diagnoses = mysqlTable("diagnoses", {
   id: int("id").autoincrement().primaryKey(),
-  name: varchar("name", { length: 128 }).notNull().unique(),
+  tenantId: int("tenantId").notNull().default(1),
+  name: varchar("name", { length: 128 }).notNull(),
   category: varchar("category", { length: 64 }),
   color: varchar("color", { length: 16 }).default("#3B82F6"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -81,6 +83,7 @@ export type Diagnosis = typeof diagnoses.$inferSelect;
 // ─── Visits ───────────────────────────────────────────────────────────────────
 export const visits = mysqlTable("visits", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull().default(1),
   patientId: int("patientId").notNull(),
   doctorId: int("doctorId").notNull(),
   visitDate: timestamp("visitDate").notNull(),
@@ -119,6 +122,7 @@ export type InsertVisit = typeof visits.$inferInsert;
 // ─── Prescriptions ────────────────────────────────────────────────────────────
 export const prescriptions = mysqlTable("prescriptions", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull().default(1),
   patientId: int("patientId").notNull(),
   visitId: int("visitId"),
   doctorId: int("doctorId").notNull(),
@@ -147,6 +151,7 @@ export type InsertPrescription = typeof prescriptions.$inferInsert;
 // ─── Prescription Templates ───────────────────────────────────────────────────
 export const prescriptionTemplates = mysqlTable("prescriptionTemplates", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull().default(1),
   name: varchar("name", { length: 256 }).notNull(),
   doctorId: int("doctorId").notNull(),
   medications: json("medications").$type<Array<{
@@ -166,6 +171,7 @@ export type PrescriptionTemplate = typeof prescriptionTemplates.$inferSelect;
 // ─── Appointments ─────────────────────────────────────────────────────────────
 export const appointments = mysqlTable("appointments", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull().default(1),
   patientId: int("patientId").notNull(),
   doctorId: int("doctorId").notNull(),
   appointmentDate: timestamp("appointmentDate").notNull(),
@@ -190,6 +196,7 @@ export type InsertAppointment = typeof appointments.$inferInsert;
 // ─── Medical Files ────────────────────────────────────────────────────────────
 export const medicalFiles = mysqlTable("medicalFiles", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull().default(1),
   patientId: int("patientId").notNull(),
   visitId: int("visitId"),
   uploadedBy: int("uploadedBy").notNull(),
@@ -216,6 +223,7 @@ export type InsertMedicalFile = typeof medicalFiles.$inferInsert;
 // ─── Activity Logs ────────────────────────────────────────────────────────────
 export const activityLogs = mysqlTable("activityLogs", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull().default(1),
   userId: int("userId").notNull(),
   action: varchar("action", { length: 128 }).notNull(),
   entityType: varchar("entityType", { length: 64 }),
@@ -234,7 +242,8 @@ export type ActivityLog = typeof activityLogs.$inferSelect;
 // ─── Settings ─────────────────────────────────────────────────────────────────
 export const settings = mysqlTable("settings", {
   id: int("id").autoincrement().primaryKey(),
-  key: varchar("key", { length: 128 }).notNull().unique(),
+  tenantId: int("tenantId").notNull().default(1),
+  key: varchar("key", { length: 128 }).notNull(),
   value: text("value"),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -244,6 +253,7 @@ export type Setting = typeof settings.$inferSelect;
 // ─── Clinic Doctors (standalone list managed in Settings) ─────────────────────────────────────────────────
 export const clinicDoctors = mysqlTable("clinicDoctors", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull().default(1),
   name: varchar("name", { length: 256 }).notNull(),
   specialty: varchar("specialty", { length: 128 }),
   phone: varchar("phone", { length: 32 }),
@@ -258,6 +268,7 @@ export type InsertClinicDoctor = typeof clinicDoctors.$inferInsert;
 // ─── Surgery Types ───────────────────────────────────────────────────────────────────────────
 export const surgeryTypes = mysqlTable("surgeryTypes", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull().default(1),
   name: varchar("name", { length: 256 }).notNull(),
   description: text("description"),
   isActive: boolean("isActive").default(true).notNull(),
@@ -271,6 +282,7 @@ export type InsertSurgeryType = typeof surgeryTypes.$inferInsert;
 // ─── Surgeries ─────────────────────────────────────────────────────────────────────────────────────
 export const surgeries = mysqlTable("surgeries", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull().default(1),
   patientId: int("patientId").notNull(),
   doctorId: int("doctorId").notNull(), // references clinicDoctors.id
   surgeryTypeId: int("surgeryTypeId").notNull(), // references surgeryTypes.id

@@ -1,26 +1,28 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
-import { getDb } from "../db";
+import { getDb, getTenantId } from "../db";
 import { surgeries, surgeryTypes, clinicDoctors, patients } from "../../drizzle/schema";
 import { eq, and, desc, gte, lte } from "drizzle-orm";
 
 // ─── Surgery Types Router ─────────────────────────────────────────────────────
 export const surgeryTypesRouter = router({
-  list: protectedProcedure.query(async () => {
+  list: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) return [];
+    const tenantId = await getTenantId(ctx.user.email) ?? 1;
     return db
       .select()
       .from(surgeryTypes)
-      .where(eq(surgeryTypes.isActive, true))
+      .where(and(eq(surgeryTypes.isActive, true), eq(surgeryTypes.tenantId, tenantId)))
       .orderBy(surgeryTypes.name);
   }),
 
-  listAll: protectedProcedure.query(async () => {
+  listAll: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) return [];
-    return db.select().from(surgeryTypes).orderBy(surgeryTypes.name);
+    const tenantId = await getTenantId(ctx.user.email) ?? 1;
+    return db.select().from(surgeryTypes).where(eq(surgeryTypes.tenantId, tenantId)).orderBy(surgeryTypes.name);
   }),
 
   create: protectedProcedure
@@ -28,12 +30,14 @@ export const surgeryTypesRouter = router({
       name: z.string().min(1),
       description: z.string().optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const tenantId = await getTenantId(ctx.user.email) ?? 1;
       const [result] = await db.insert(surgeryTypes).values({
         name: input.name,
         description: input.description,
+        tenantId,
       });
       return { id: result.insertId };
     }),
@@ -65,20 +69,22 @@ export const surgeryTypesRouter = router({
 
 // ─── Clinic Doctors Router ────────────────────────────────────────────────────
 export const clinicDoctorsRouter = router({
-  list: protectedProcedure.query(async () => {
+  list: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) return [];
+    const tenantId = await getTenantId(ctx.user.email) ?? 1;
     return db
       .select()
       .from(clinicDoctors)
-      .where(eq(clinicDoctors.isActive, true))
+      .where(and(eq(clinicDoctors.isActive, true), eq(clinicDoctors.tenantId, tenantId)))
       .orderBy(clinicDoctors.name);
   }),
 
-  listAll: protectedProcedure.query(async () => {
+  listAll: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) return [];
-    return db.select().from(clinicDoctors).orderBy(clinicDoctors.name);
+    const tenantId = await getTenantId(ctx.user.email) ?? 1;
+    return db.select().from(clinicDoctors).where(eq(clinicDoctors.tenantId, tenantId)).orderBy(clinicDoctors.name);
   }),
 
   create: protectedProcedure
@@ -87,13 +93,15 @@ export const clinicDoctorsRouter = router({
       specialty: z.string().optional(),
       phone: z.string().optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const tenantId = await getTenantId(ctx.user.email) ?? 1;
       const [result] = await db.insert(clinicDoctors).values({
         name: input.name,
         specialty: input.specialty,
         phone: input.phone,
+        tenantId,
       });
       return { id: result.insertId };
     }),
@@ -134,9 +142,10 @@ export const surgeriesRouter = router({
       from: z.date().optional(),
       to: z.date().optional(),
     }).optional())
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) return [];
+      const tenantId = await getTenantId(ctx.user.email) ?? 1;
       const rows = await db
         .select({
           id: surgeries.id,
@@ -156,7 +165,7 @@ export const surgeriesRouter = router({
         .leftJoin(patients, eq(surgeries.patientId, patients.id))
         .leftJoin(clinicDoctors, eq(surgeries.doctorId, clinicDoctors.id))
         .leftJoin(surgeryTypes, eq(surgeries.surgeryTypeId, surgeryTypes.id))
-        .where(eq(surgeries.isDeleted, false))
+        .where(and(eq(surgeries.isDeleted, false), eq(surgeries.tenantId, tenantId)))
         .orderBy(desc(surgeries.surgeryDate));
 
       type SurgeryRow = (typeof rows)[number];
@@ -212,6 +221,7 @@ export const surgeriesRouter = router({
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const tenantId = await getTenantId(ctx.user.email) ?? 1;
       const [result] = await db.insert(surgeries).values({
         patientId: input.patientId,
         doctorId: input.doctorId,
@@ -219,6 +229,7 @@ export const surgeriesRouter = router({
         surgeryDate: input.surgeryDate,
         notes: input.notes,
         status: input.status,
+        tenantId,
         createdBy: ctx.user.id,
       });
       return { id: result.insertId };
@@ -253,9 +264,10 @@ export const surgeriesRouter = router({
 
   upcoming: protectedProcedure
     .input(z.object({ days: z.number().default(30) }).optional())
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) return [];
+      const tenantId = await getTenantId(ctx.user.email) ?? 1;
       const now = new Date();
       const future = new Date();
       future.setDate(future.getDate() + (input?.days ?? 30));
@@ -280,6 +292,7 @@ export const surgeriesRouter = router({
         .where(
           and(
             eq(surgeries.isDeleted, false),
+            eq(surgeries.tenantId, tenantId),
             gte(surgeries.surgeryDate, now),
             lte(surgeries.surgeryDate, future),
           )

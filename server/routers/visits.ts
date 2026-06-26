@@ -4,6 +4,7 @@ import { protectedProcedure, router } from "../_core/trpc";
 import {
   createVisit, deleteVisit, getFollowUpPatients, getRecentVisits,
   getVisitById, getVisitsByPatient, getVisitsPaginated, logActivity, updateVisit,
+  getTenantId,
 } from "../db";
 
 const vitalSignsInput = z.object({
@@ -41,9 +42,11 @@ export const visitsRouter = router({
       page: z.number().optional(),
       limit: z.number().optional(),
     }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const tenantId = await getTenantId(ctx.user.email) ?? 1;
       return getVisitsPaginated({
         ...input,
+        tenantId,
         dateFrom: input.dateFrom ? new Date(input.dateFrom) : undefined,
         dateTo: input.dateTo ? new Date(input.dateTo) : undefined,
       });
@@ -63,7 +66,10 @@ export const visitsRouter = router({
 
   recent: protectedProcedure
     .input(z.object({ limit: z.number().optional() }))
-    .query(async ({ input }) => getRecentVisits(input.limit)),
+    .query(async ({ input, ctx }) => {
+      const tenantId = await getTenantId(ctx.user.email) ?? 1;
+      return getRecentVisits(input.limit, tenantId);
+    }),
 
   followUps: protectedProcedure.query(async () => getFollowUpPatients()),
 
@@ -73,8 +79,10 @@ export const visitsRouter = router({
       if (ctx.user.role !== "admin" && ctx.user.role !== "doctor") {
         throw new TRPCError({ code: "FORBIDDEN", message: "Only doctors can create visits" });
       }
+      const tenantId = await getTenantId(ctx.user.email) ?? 1;
       const id = await createVisit({
         ...input,
+        tenantId,
         visitDate: new Date(input.visitDate),
         followUpDate: input.followUpDate ? new Date(input.followUpDate) : null,
         temperature: input.temperature ? input.temperature : null,
@@ -87,6 +95,7 @@ export const visitsRouter = router({
       });
       await logActivity({
         userId: ctx.user.id,
+        tenantId,
         action: "visit_created",
         entityType: "visit",
         entityId: id,
@@ -101,6 +110,7 @@ export const visitsRouter = router({
       if (ctx.user.role !== "admin" && ctx.user.role !== "doctor") {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
+      const tenantId = await getTenantId(ctx.user.email) ?? 1;
       const { id, ...data } = input;
       await updateVisit(id, {
         ...data,
@@ -109,6 +119,7 @@ export const visitsRouter = router({
       }, ctx.user.id);
       await logActivity({
         userId: ctx.user.id,
+        tenantId,
         action: "visit_updated",
         entityType: "visit",
         entityId: id,

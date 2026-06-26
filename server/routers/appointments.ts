@@ -3,7 +3,7 @@ import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import {
   createAppointment, deleteAppointment, getAppointmentById, getAppointments,
-  getTodayAppointmentCount, logActivity, updateAppointment,
+  getTodayAppointmentCount, logActivity, updateAppointment, getTenantId,
 } from "../db";
 
 export const appointmentsRouter = router({
@@ -17,9 +17,11 @@ export const appointmentsRouter = router({
       page: z.number().optional(),
       limit: z.number().optional(),
     }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const tenantId = await getTenantId(ctx.user.email) ?? 1;
       return getAppointments({
         ...input,
+        tenantId,
         dateFrom: input.dateFrom ? new Date(input.dateFrom) : undefined,
         dateTo: input.dateTo ? new Date(input.dateTo) : undefined,
       });
@@ -35,7 +37,10 @@ export const appointmentsRouter = router({
 
   todayCount: protectedProcedure
     .input(z.object({ doctorId: z.number().optional() }))
-    .query(async ({ input }) => getTodayAppointmentCount(input.doctorId)),
+    .query(async ({ input, ctx }) => {
+      const tenantId = await getTenantId(ctx.user.email) ?? 1;
+      return getTodayAppointmentCount(input.doctorId, tenantId);
+    }),
 
   create: protectedProcedure
     .input(z.object({
@@ -52,14 +57,17 @@ export const appointmentsRouter = router({
       if (role !== "admin" && role !== "doctor" && role !== "assistant") {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
+      const tenantId = await getTenantId(ctx.user.email) ?? 1;
       const id = await createAppointment({
         ...input,
+        tenantId,
         appointmentDate: new Date(input.appointmentDate),
         status: input.status ?? "pending",
         createdBy: ctx.user.id,
       });
       await logActivity({
         userId: ctx.user.id,
+        tenantId,
         action: "appointment_created",
         entityType: "appointment",
         entityId: id,
@@ -83,6 +91,7 @@ export const appointmentsRouter = router({
       if (role !== "admin" && role !== "doctor" && role !== "assistant") {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
+      const tenantId = await getTenantId(ctx.user.email) ?? 1;
       const { id, ...data } = input;
       await updateAppointment(id, {
         ...data,
@@ -90,6 +99,7 @@ export const appointmentsRouter = router({
       }, ctx.user.id);
       await logActivity({
         userId: ctx.user.id,
+        tenantId,
         action: "appointment_updated",
         entityType: "appointment",
         entityId: id,
