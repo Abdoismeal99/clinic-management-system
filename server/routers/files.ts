@@ -43,9 +43,6 @@ export const filesRouter = router({
       description: z.string().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user.role !== "admin" && ctx.user.role !== "doctor") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Only doctors can upload files" });
-      }
       const ext = input.fileName.split(".").pop() ?? "bin";
       const fileKey = `medical/${input.patientId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
       // Store metadata first
@@ -83,9 +80,6 @@ export const filesRouter = router({
   updateAnnotations: protectedProcedure
     .input(z.object({ id: z.number(), annotations: z.any() }))
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user.role !== "admin" && ctx.user.role !== "doctor") {
-        throw new TRPCError({ code: "FORBIDDEN" });
-      }
       await updateFileAnnotations(input.id, input.annotations);
       return { success: true };
     }),
@@ -93,9 +87,6 @@ export const filesRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user.role !== "admin" && ctx.user.role !== "doctor") {
-        throw new TRPCError({ code: "FORBIDDEN" });
-      }
       await deleteFile(input.id);
       await logActivity({
         userId: ctx.user.id,

@@ -53,10 +53,6 @@ export const appointmentsRouter = router({
       status: z.enum(["pending", "completed", "cancelled", "no-show"]).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
-      const role = ctx.user.role;
-      if (role !== "admin" && role !== "doctor" && role !== "assistant") {
-        throw new TRPCError({ code: "FORBIDDEN" });
-      }
       const tenantId = await getTenantId(ctx.user.email) ?? 1;
       const id = await createAppointment({
         ...input,
@@ -87,10 +83,6 @@ export const appointmentsRouter = router({
       doctorId: z.number().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
-      const role = ctx.user.role;
-      if (role !== "admin" && role !== "doctor" && role !== "assistant") {
-        throw new TRPCError({ code: "FORBIDDEN" });
-      }
       const tenantId = await getTenantId(ctx.user.email) ?? 1;
       const { id, ...data } = input;
       await updateAppointment(id, {
@@ -111,9 +103,6 @@ export const appointmentsRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user.role !== "admin" && ctx.user.role !== "doctor") {
-        throw new TRPCError({ code: "FORBIDDEN" });
-      }
       await deleteAppointment(input.id);
       return { success: true };
     }),

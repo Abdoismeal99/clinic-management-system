@@ -76,9 +76,6 @@ export const visitsRouter = router({
   create: protectedProcedure
     .input(visitInput)
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user.role !== "admin" && ctx.user.role !== "doctor") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Only doctors can create visits" });
-      }
       const tenantId = await getTenantId(ctx.user.email) ?? 1;
       const id = await createVisit({
         ...input,
@@ -107,9 +104,6 @@ export const visitsRouter = router({
   update: protectedProcedure
     .input(z.object({ id: z.number() }).merge(visitInput.partial()))
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user.role !== "admin" && ctx.user.role !== "doctor") {
-        throw new TRPCError({ code: "FORBIDDEN" });
-      }
       const tenantId = await getTenantId(ctx.user.email) ?? 1;
       const { id, ...data } = input;
       await updateVisit(id, {
@@ -131,9 +125,6 @@ export const visitsRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Only admins can delete visits" });
-      }
       await deleteVisit(input.id);
       return { success: true };
     }),

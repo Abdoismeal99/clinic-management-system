@@ -37,9 +37,6 @@ export const prescriptionsRouter = router({
       notes: z.string().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user.role !== "admin" && ctx.user.role !== "doctor") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Only doctors can create prescriptions" });
-      }
       const id = await createPrescription({
         ...input,
         doctorId: ctx.user.id,
@@ -58,9 +55,6 @@ export const prescriptionsRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user.role !== "admin" && ctx.user.role !== "doctor") {
-        throw new TRPCError({ code: "FORBIDDEN" });
-      }
       await deletePrescription(input.id);
       return { success: true };
     }),
@@ -77,9 +71,6 @@ export const prescriptionsRouter = router({
       isFavorite: z.boolean().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user.role !== "admin" && ctx.user.role !== "doctor") {
-        throw new TRPCError({ code: "FORBIDDEN" });
-      }
       const id = await createTemplate({
         ...input,
         isFavorite: input.isFavorite ?? false,

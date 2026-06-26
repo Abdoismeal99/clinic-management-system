@@ -54,10 +54,6 @@ export const patientsRouter = router({
   create: protectedProcedure
     .input(patientInput)
     .mutation(async ({ input, ctx }) => {
-      const role = ctx.user.role;
-      if (role !== "admin" && role !== "doctor" && role !== "assistant") {
-        throw new TRPCError({ code: "FORBIDDEN" });
-      }
       const tenantId = await getTenantId(ctx.user.email) ?? 1;
       const patientId = await generatePatientId();
       const id = await createPatient({
@@ -84,10 +80,6 @@ export const patientsRouter = router({
   update: protectedProcedure
     .input(z.object({ id: z.number() }).merge(patientInput.partial()))
     .mutation(async ({ input, ctx }) => {
-      const role = ctx.user.role;
-      if (role !== "admin" && role !== "doctor" && role !== "assistant") {
-        throw new TRPCError({ code: "FORBIDDEN" });
-      }
       const tenantId = await getTenantId(ctx.user.email) ?? 1;
       const { id, ...data } = input;
       await updatePatient(id, {
@@ -109,9 +101,6 @@ export const patientsRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user.role !== "admin" && ctx.user.role !== "doctor") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Only admins and doctors can delete patients" });
-      }
       const tenantId = await getTenantId(ctx.user.email) ?? 1;
       await softDeletePatient(input.id, ctx.user.id);
       await logActivity({
@@ -128,9 +117,6 @@ export const patientsRouter = router({
   restore: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user.role !== "admin" && ctx.user.role !== "doctor") {
-        throw new TRPCError({ code: "FORBIDDEN" });
-      }
       const tenantId = await getTenantId(ctx.user.email) ?? 1;
       await restorePatient(input.id);
       await logActivity({
