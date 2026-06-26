@@ -8,24 +8,25 @@ import { sdk } from "./sdk";
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID ?? "";
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET ?? "";
 
-function getRedirectUri(req: Request): string {
-  const proto = req.headers["x-forwarded-proto"] ?? (req.secure ? "https" : "http");
-  const host = req.headers["x-forwarded-host"] ?? req.headers.host ?? "localhost:3000";
-  return `${proto}://${host}/api/auth/google/callback`;
-}
+// Use the VITE_APP_URL env if set, otherwise fall back to the known production domain
+const APP_BASE_URL =
+  process.env.VITE_APP_URL?.replace(/\/$/, "") ||
+  "https://clinic-system.org";
+
+const REDIRECT_URI = `${APP_BASE_URL}/api/auth/google/callback`;
 
 export function registerGoogleOAuthRoutes(app: Express) {
   // Step 1: Redirect user to Google
-  app.get("/api/auth/google", (req: Request, res: Response) => {
-    const redirectUri = getRedirectUri(req);
+  app.get("/api/auth/google", (_req: Request, res: Response) => {
     const params = new URLSearchParams({
       client_id: GOOGLE_CLIENT_ID,
-      redirect_uri: redirectUri,
+      redirect_uri: REDIRECT_URI,
       response_type: "code",
       scope: "openid email profile",
       access_type: "offline",
       prompt: "select_account",
     });
+    console.log("[Google OAuth] Redirecting with redirect_uri:", REDIRECT_URI);
     res.redirect(302, `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`);
   });
 
@@ -41,8 +42,6 @@ export function registerGoogleOAuthRoutes(app: Express) {
     }
 
     try {
-      const redirectUri = getRedirectUri(req);
-
       // Exchange code for tokens
       const tokenRes = await axios.post<{
         access_token: string;
@@ -54,7 +53,7 @@ export function registerGoogleOAuthRoutes(app: Express) {
           code,
           client_id: GOOGLE_CLIENT_ID,
           client_secret: GOOGLE_CLIENT_SECRET,
-          redirect_uri: redirectUri,
+          redirect_uri: REDIRECT_URI,
           grant_type: "authorization_code",
         }).toString(),
         { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
