@@ -1,0 +1,1 @@
+ALTER TABLE `tenants` MODIFY COLUMN `plan` enum('demo','monthly','quarterly','yearly','permanent') NOT NULL DEFAULT 'demo';

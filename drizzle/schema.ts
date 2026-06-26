@@ -310,7 +310,7 @@ export const tenants = mysqlTable("tenants", {
   clinicName: varchar("clinicName", { length: 256 }).notNull(),
   email: varchar("email", { length: 320 }).notNull().unique(),
   phone: varchar("phone", { length: 32 }),
-  plan: mysqlEnum("plan", ["demo", "monthly", "quarterly", "yearly"]).default("demo").notNull(),
+  plan: mysqlEnum("plan", ["demo", "monthly", "quarterly", "yearly", "permanent"]).default("demo").notNull(),
   status: mysqlEnum("status", ["pending", "active", "expired", "suspended"]).default("pending").notNull(),
   activationToken: varchar("activationToken", { length: 128 }),
   activationTokenExpiresAt: timestamp("activationTokenExpiresAt"),

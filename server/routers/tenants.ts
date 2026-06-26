@@ -21,13 +21,15 @@ function assertAdmin(email: string | null | undefined) {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-function getPlanExpiry(plan: "demo" | "monthly" | "quarterly" | "yearly"): Date {
+function getPlanExpiry(plan: "demo" | "monthly" | "quarterly" | "yearly" | "permanent"): Date | null {
+  if (plan === "permanent") return null; // no expiry - permanent access
   const now = new Date();
   switch (plan) {
     case "demo":      return new Date(now.getTime() + 48 * 60 * 60 * 1000);       // 48 hours
     case "monthly":   return new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);  // 30 days
     case "quarterly": return new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);  // 90 days
     case "yearly":    return new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000); // 365 days
+    default:          return new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
   }
 }
 
@@ -37,6 +39,7 @@ function getPlanLabel(plan: string): string {
     case "monthly":   return "شهري";
     case "quarterly": return "3 شهور";
     case "yearly":    return "سنوي";
+    case "permanent": return "دائم";
     default:          return plan;
   }
 }
@@ -62,7 +65,7 @@ export const tenantsRouter = router({
       clinicName: z.string().min(2, "اسم العيادة مطلوب"),
       email: z.string().email("إيميل غير صحيح"),
       phone: z.string().optional(),
-      plan: z.enum(["demo", "monthly", "quarterly", "yearly"]),
+      plan: z.enum(["demo", "monthly", "quarterly", "yearly", "permanent"]),
       notes: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -101,7 +104,7 @@ export const tenantsRouter = router({
       id: z.number(),
       clinicName: z.string().optional(),
       phone: z.string().optional(),
-      plan: z.enum(["demo", "monthly", "quarterly", "yearly"]).optional(),
+      plan: z.enum(["demo", "monthly", "quarterly", "yearly", "permanent"]).optional(),
       status: z.enum(["pending", "active", "expired", "suspended"]).optional(),
       notes: z.string().optional(),
       extendFromNow: z.boolean().optional(), // if true, recalculate expiresAt from now
@@ -231,8 +234,8 @@ export const tenantsRouter = router({
     const tenant = result[0];
     if (!tenant) return null;
 
-    // Auto-expire check
-    if (tenant.status === "active" && tenant.expiresAt && tenant.expiresAt < new Date()) {
+    // Auto-expire check (skip for permanent plan)
+    if (tenant.plan !== "permanent" && tenant.status === "active" && tenant.expiresAt && tenant.expiresAt < new Date()) {
       await db.update(tenants).set({ status: "expired" }).where(eq(tenants.id, tenant.id));
       return { status: "expired", isAdmin: false, clinicName: tenant.clinicName, expiresAt: tenant.expiresAt };
     }

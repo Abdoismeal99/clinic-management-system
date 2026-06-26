@@ -43,6 +43,13 @@
       "when": 1782473810890,
       "tag": "0005_clear_taskmaster",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1782475636270,
+      "tag": "0006_ordinary_shaman",
+      "breakpoints": true
     }
   ]
 }

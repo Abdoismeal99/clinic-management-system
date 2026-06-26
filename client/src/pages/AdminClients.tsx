@@ -28,6 +28,7 @@ const PLAN_LABELS: Record<string, string> = {
   monthly: "شهري",
   quarterly: "3 شهور",
   yearly: "سنوي",
+  permanent: "دائم",
 };
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
@@ -80,7 +81,7 @@ export default function AdminClients() {
   const [editTenant, setEditTenant] = useState<Tenant | null>(null);
   const [newLink, setNewLink] = useState<string | null>(null);
   const [form, setForm] = useState({ clinicName: "", email: "", phone: "", plan: "demo" as const, notes: "" });
-  const [editForm, setEditForm] = useState({ clinicName: "", phone: "", plan: "demo" as "demo"|"monthly"|"quarterly"|"yearly", status: "active" as any, notes: "", extendFromNow: false });
+  const [editForm, setEditForm] = useState({ clinicName: "", phone: "", plan: "demo" as "demo"|"monthly"|"quarterly"|"yearly"|"permanent", status: "active" as any, notes: "", extendFromNow: false });
 
   const createMutation = trpc.tenants.create.useMutation({
     onSuccess: (data) => {
@@ -269,6 +270,7 @@ export default function AdminClients() {
                   <SelectItem value="monthly">شهري (30 يوم)</SelectItem>
                   <SelectItem value="quarterly">3 شهور (90 يوم)</SelectItem>
                   <SelectItem value="yearly">سنوي (365 يوم)</SelectItem>
+                  <SelectItem value="permanent">دائم (بدون انتهاء)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -323,6 +325,7 @@ export default function AdminClients() {
                   <SelectItem value="monthly">شهري (30 يوم) من الآن</SelectItem>
                   <SelectItem value="quarterly">3 شهور (90 يوم) من الآن</SelectItem>
                   <SelectItem value="yearly">سنوي (365 يوم) من الآن</SelectItem>
+                  <SelectItem value="permanent">دائم (بدون انتهاء)</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">اختيار خطة سيمدد الاشتراك من الآن</p>
