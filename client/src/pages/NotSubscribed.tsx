@@ -1,7 +1,6 @@
 import { MessageCircle, Stethoscope, Clock, Shield, Zap, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 
 const WHATSAPP_NUMBER = "201500663131"; // 01500663131 with country code
@@ -17,7 +16,7 @@ export default function NotSubscribed() {
   const { user } = useAuth();
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => {
-      window.location.href = getLoginUrl();
+      window.location.href = "/api/auth/google";
     },
   });
 
