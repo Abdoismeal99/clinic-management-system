@@ -111,21 +111,7 @@ export default function ClinicLayout({ children }: ClinicLayoutProps) {
     );
   }
 
-  // Show loading while checking subscription (wait until query resolves)
-  if (!isSystemAdmin && isAuthenticated && (subLoading || subscription === undefined)) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  // Not subscribed — show WhatsApp contact page
-  // subscription===null means email not found in tenants table
-  const blockedStatuses = ["expired", "suspended", "pending"];
-  if (isAuthenticated && !isSystemAdmin && (subscription === null || (subscription && blockedStatuses.includes(subscription.status)))) {
-    return <NotSubscribed />;
-  }
+  // All authenticated users can access the system — no subscription check
 
   const userInitials = user?.name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) ?? "U";
   const isActive = (href: string) => href === "/" ? location === "/" : location.startsWith(href);
