@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTheme } from "@/contexts/ThemeContext";
+import NotSubscribed from "@/pages/NotSubscribed";
 
 const NAV_ITEMS = [
   { label: "لوحة التحكم", icon: Home, href: "/" },
@@ -92,6 +93,29 @@ export default function ClinicLayout({ children }: ClinicLayoutProps) {
         </div>
       </div>
     );
+  }
+
+  const SYSTEM_ADMIN_EMAIL = "abdoismeal012@gmail.com";
+  const isSystemAdmin = user?.email?.toLowerCase() === SYSTEM_ADMIN_EMAIL.toLowerCase();
+
+  // Check subscription for non-system-admin users
+  const { data: subscription, isLoading: subLoading } = trpc.tenants.checkMySubscription.useQuery(
+    undefined,
+    { enabled: !!user && !isSystemAdmin }
+  );
+
+  // Show loading while checking subscription
+  if (!isSystemAdmin && subLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Not subscribed — show WhatsApp contact page
+  if (!isSystemAdmin && (!subscription || subscription.status === "expired" || subscription.status === "suspended" || subscription.status === "pending")) {
+    return <NotSubscribed />;
   }
 
   const userInitials = user?.name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) ?? "U";
