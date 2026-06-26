@@ -70,7 +70,7 @@ export default function VisitDetail() {
       respiratoryRate: form.respiratoryRate ? parseInt(form.respiratoryRate) : undefined,
     });
   };
-  const canManage = user?.role === "admin" || user?.role === "doctor";
+  const canManage = user?.role === "admin" || user?.role === "doctor" || (user as any)?.tenantRole === "clinic_admin";
   if (isLoading) return <div className="p-6 space-y-4 max-w-4xl mx-auto"><Skeleton className="h-8 w-48" /><Skeleton className="h-64" /></div>;
   if (!visit) return (
     <div className="p-6 text-center">

@@ -112,7 +112,7 @@ export default function Prescriptions() {
 
   const handlePrint = () => window.print();
 
-  const canManage = user?.role === "admin" || user?.role === "doctor";
+  const canManage = user?.role === "admin" || user?.role === "doctor" || (user as any)?.tenantRole === "clinic_admin";
 
   // Find selected patient info
   const selectedPatient = patientsData?.data?.find(p => p.id === selectedPatientId);

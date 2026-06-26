@@ -41,7 +41,7 @@ export default function Files() {
   const getUploadUrlMutation = trpc.files.getUploadUrl.useMutation();
   const confirmUploadMutation = trpc.files.confirmUpload.useMutation();
   const deleteMutation = trpc.files.delete.useMutation({ onSuccess: () => { toast.success("File deleted"); utils.files.byPatient.invalidate(); }, onError: (e) => toast.error(e.message) });
-  const canUpload = user?.role === "admin" || user?.role === "doctor";
+  const canUpload = user?.role === "admin" || user?.role === "doctor" || (user as any)?.tenantRole === "clinic_admin";
   const handleDrop = useCallback((e: React.DragEvent) => { e.preventDefault(); setIsDragging(false); const f = e.dataTransfer.files[0]; if (f) { setUploadFile(f); setShowUpload(true); } }, []);
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => { const f = e.target.files?.[0]; if (f) { setUploadFile(f); setShowUpload(true); } };
   const handleUpload = async () => {

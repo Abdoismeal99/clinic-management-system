@@ -56,7 +56,9 @@ export default function Settings() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoUploading, setLogoUploading] = useState(false);
 
-  const isAdmin = user?.role === "admin";
+  // Super admin OR clinic admin can edit settings
+  const SUPER_ADMIN_EMAIL = "abdoismeal012@gmail.com";
+  const isAdmin = user?.role === "admin" || (user as any)?.tenantRole === "clinic_admin" || user?.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
 
   useEffect(() => {
     if (!settingsData) return;
