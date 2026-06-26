@@ -55,9 +55,10 @@ export default function ClinicLayout({ children }: ClinicLayoutProps) {
   const isSystemAdmin = user?.email?.toLowerCase() === SYSTEM_ADMIN_EMAIL.toLowerCase();
 
   // Must be called unconditionally (Rules of Hooks)
+  // enabled only after auth is fully resolved (loading=false) and user is present
   const { data: subscription, isLoading: subLoading } = trpc.tenants.checkMySubscription.useQuery(
     undefined,
-    { enabled: !!user && !isSystemAdmin && isAuthenticated }
+    { enabled: !loading && isAuthenticated && !!user && !isSystemAdmin }
   );
 
   if (loading) {
@@ -104,8 +105,8 @@ export default function ClinicLayout({ children }: ClinicLayoutProps) {
     );
   }
 
-  // Show loading while checking subscription
-  if (!isSystemAdmin && isAuthenticated && subLoading) {
+  // Show loading while checking subscription (wait until query resolves)
+  if (!isSystemAdmin && isAuthenticated && (subLoading || subscription === undefined)) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
@@ -114,7 +115,9 @@ export default function ClinicLayout({ children }: ClinicLayoutProps) {
   }
 
   // Not subscribed — show WhatsApp contact page
-  if (isAuthenticated && !isSystemAdmin && (!subscription || subscription.status === "expired" || subscription.status === "suspended" || subscription.status === "pending")) {
+  // subscription===null means email not found in tenants table
+  const blockedStatuses = ["expired", "suspended", "pending"];
+  if (isAuthenticated && !isSystemAdmin && (subscription === null || (subscription && blockedStatuses.includes(subscription.status)))) {
     return <NotSubscribed />;
   }
 
