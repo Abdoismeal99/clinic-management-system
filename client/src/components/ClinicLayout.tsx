@@ -180,7 +180,7 @@ export default function ClinicLayout({ children }: ClinicLayoutProps) {
           );
         })}
 
-        {(user?.role === "admin") && (
+        {true && (
           <>
             <div className={cn("pt-3 pb-1", collapsed ? "px-0" : "px-3")}>
               {!collapsed && <p className="text-xs font-semibold text-sidebar-foreground/40 uppercase tracking-wider">الإدارة</p>}
