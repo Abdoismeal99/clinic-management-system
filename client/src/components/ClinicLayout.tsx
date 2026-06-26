@@ -35,6 +35,7 @@ const NAV_ITEMS = [
 
 const ADMIN_NAV_ITEMS = [
   { label: "المستخدمون", icon: ClipboardList, href: "/users" },
+  { label: "إدارة العملاء", icon: Users, href: "/admin/clients" },
   { label: "الإعدادات", icon: Settings, href: "/settings" },
 ];
 

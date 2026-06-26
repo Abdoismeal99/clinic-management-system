@@ -23,6 +23,8 @@ import Archive from "./pages/Archive";
 import Users from "./pages/Users";
 import Surgeries from "./pages/Surgeries";
 import AIAssistant from "./pages/AIAssistant";
+import AdminClients from "./pages/AdminClients";
+import Activate from "./pages/Activate";
 
 function Router() {
   return (
@@ -44,11 +46,16 @@ function Router() {
         <Route path="/users" component={Users} />
         <Route path="/surgeries" component={Surgeries} />
         <Route path="/ai-assistant" component={AIAssistant} />
+        <Route path="/admin/clients" component={AdminClients} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>
     </ClinicLayout>
   );
+}
+
+function ActivateRoute() {
+  return <Activate />;
 }
 
 function App() {
@@ -57,7 +64,10 @@ function App() {
       <ThemeProvider defaultTheme="light" switchable>
         <TooltipProvider>
           <Toaster position="top-right" richColors />
-          <Router />
+          <Switch>
+            <Route path="/activate" component={ActivateRoute} />
+            <Route component={Router} />
+          </Switch>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

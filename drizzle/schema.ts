@@ -291,3 +291,27 @@ export const surgeries = mysqlTable("surgeries", {
 
 export type Surgery = typeof surgeries.$inferSelect;
 export type InsertSurgery = typeof surgeries.$inferInsert;
+
+// ─── Tenants (Client Subscriptions) ──────────────────────────────────────────
+export const tenants = mysqlTable("tenants", {
+  id: int("id").autoincrement().primaryKey(),
+  clinicName: varchar("clinicName", { length: 256 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  phone: varchar("phone", { length: 32 }),
+  plan: mysqlEnum("plan", ["demo", "monthly", "quarterly", "yearly"]).default("demo").notNull(),
+  status: mysqlEnum("status", ["pending", "active", "expired", "suspended"]).default("pending").notNull(),
+  activationToken: varchar("activationToken", { length: 128 }),
+  activationTokenExpiresAt: timestamp("activationTokenExpiresAt"),
+  activatedAt: timestamp("activatedAt"),
+  expiresAt: timestamp("expiresAt"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => [
+  index("idx_tenants_email").on(t.email),
+  index("idx_tenants_status").on(t.status),
+  index("idx_tenants_activationToken").on(t.activationToken),
+]);
+
+export type Tenant = typeof tenants.$inferSelect;
+export type InsertTenant = typeof tenants.$inferInsert;
