@@ -51,6 +51,15 @@ export default function ClinicLayout({ children }: ClinicLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
 
+  const SYSTEM_ADMIN_EMAIL = "abdoismeal012@gmail.com";
+  const isSystemAdmin = user?.email?.toLowerCase() === SYSTEM_ADMIN_EMAIL.toLowerCase();
+
+  // Must be called unconditionally (Rules of Hooks)
+  const { data: subscription, isLoading: subLoading } = trpc.tenants.checkMySubscription.useQuery(
+    undefined,
+    { enabled: !!user && !isSystemAdmin && isAuthenticated }
+  );
+
   if (loading) {
     return (
       <div className="flex h-screen bg-background">
@@ -95,17 +104,8 @@ export default function ClinicLayout({ children }: ClinicLayoutProps) {
     );
   }
 
-  const SYSTEM_ADMIN_EMAIL = "abdoismeal012@gmail.com";
-  const isSystemAdmin = user?.email?.toLowerCase() === SYSTEM_ADMIN_EMAIL.toLowerCase();
-
-  // Check subscription for non-system-admin users
-  const { data: subscription, isLoading: subLoading } = trpc.tenants.checkMySubscription.useQuery(
-    undefined,
-    { enabled: !!user && !isSystemAdmin }
-  );
-
   // Show loading while checking subscription
-  if (!isSystemAdmin && subLoading) {
+  if (!isSystemAdmin && isAuthenticated && subLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
@@ -114,7 +114,7 @@ export default function ClinicLayout({ children }: ClinicLayoutProps) {
   }
 
   // Not subscribed — show WhatsApp contact page
-  if (!isSystemAdmin && (!subscription || subscription.status === "expired" || subscription.status === "suspended" || subscription.status === "pending")) {
+  if (isAuthenticated && !isSystemAdmin && (!subscription || subscription.status === "expired" || subscription.status === "suspended" || subscription.status === "pending")) {
     return <NotSubscribed />;
   }
 
