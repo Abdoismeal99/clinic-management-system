@@ -1,13 +1,13 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { invokeLLM } from "../_core/llm";
-import { getDb } from "../db";
-import { patients, visits, appointments, prescriptions } from "../../drizzle/schema";
-import { and, count, desc, eq, gte, ilike, like, lte, or, sql } from "drizzle-orm";
+import { getDb, getTenantId } from "../db";
+import { patients, visits, appointments, prescriptions, surgeries, clinicDoctors, surgeryTypes } from "../../drizzle/schema";
+import { and, count, desc, eq, gte, like, lte, sql } from "drizzle-orm";
 
-// ─── Helpers to gather clinic context ─────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-async function getClinicSnapshot() {
+async function getClinicSnapshot(tenantId: number) {
   const db = await getDb();
   if (!db) return null;
 
@@ -28,16 +28,18 @@ async function getClinicSnapshot() {
     visitsLast30Days,
     todayAppointments,
     upcomingAppointments,
+    upcomingSurgeries,
   ] = await Promise.all([
-    db.select({ cnt: count() }).from(patients).where(eq(patients.isDeleted, false)),
-    db.select({ cnt: count() }).from(patients).where(and(eq(patients.isDeleted, false), gte(patients.createdAt, threeDaysAgo))),
-    db.select({ cnt: count() }).from(patients).where(and(eq(patients.isDeleted, false), gte(patients.createdAt, sevenDaysAgo))),
-    db.select({ cnt: count() }).from(patients).where(and(eq(patients.isDeleted, false), gte(patients.createdAt, thirtyDaysAgo))),
-    db.select({ cnt: count() }).from(visits).where(and(eq(visits.isDeleted, false), gte(visits.visitDate, threeDaysAgo))),
-    db.select({ cnt: count() }).from(visits).where(and(eq(visits.isDeleted, false), gte(visits.visitDate, sevenDaysAgo))),
-    db.select({ cnt: count() }).from(visits).where(and(eq(visits.isDeleted, false), gte(visits.visitDate, thirtyDaysAgo))),
-    db.select({ cnt: count() }).from(appointments).where(and(eq(appointments.isDeleted, false), gte(appointments.appointmentDate, todayStart), lte(appointments.appointmentDate, todayEnd))),
-    db.select({ cnt: count() }).from(appointments).where(and(eq(appointments.isDeleted, false), gte(appointments.appointmentDate, now))),
+    db.select({ cnt: count() }).from(patients).where(and(eq(patients.tenantId, tenantId), eq(patients.isDeleted, false))),
+    db.select({ cnt: count() }).from(patients).where(and(eq(patients.tenantId, tenantId), eq(patients.isDeleted, false), gte(patients.createdAt, threeDaysAgo))),
+    db.select({ cnt: count() }).from(patients).where(and(eq(patients.tenantId, tenantId), eq(patients.isDeleted, false), gte(patients.createdAt, sevenDaysAgo))),
+    db.select({ cnt: count() }).from(patients).where(and(eq(patients.tenantId, tenantId), eq(patients.isDeleted, false), gte(patients.createdAt, thirtyDaysAgo))),
+    db.select({ cnt: count() }).from(visits).where(and(eq(visits.tenantId, tenantId), eq(visits.isDeleted, false), gte(visits.visitDate, threeDaysAgo))),
+    db.select({ cnt: count() }).from(visits).where(and(eq(visits.tenantId, tenantId), eq(visits.isDeleted, false), gte(visits.visitDate, sevenDaysAgo))),
+    db.select({ cnt: count() }).from(visits).where(and(eq(visits.tenantId, tenantId), eq(visits.isDeleted, false), gte(visits.visitDate, thirtyDaysAgo))),
+    db.select({ cnt: count() }).from(appointments).where(and(eq(appointments.tenantId, tenantId), eq(appointments.isDeleted, false), gte(appointments.appointmentDate, todayStart), lte(appointments.appointmentDate, todayEnd))),
+    db.select({ cnt: count() }).from(appointments).where(and(eq(appointments.tenantId, tenantId), eq(appointments.isDeleted, false), gte(appointments.appointmentDate, now))),
+    db.select({ cnt: count() }).from(surgeries).where(and(eq(surgeries.tenantId, tenantId), gte(surgeries.surgeryDate, now))),
   ]);
 
   return {
@@ -50,14 +52,15 @@ async function getClinicSnapshot() {
     visitsLast30Days: visitsLast30Days[0]?.cnt ?? 0,
     todayAppointments: todayAppointments[0]?.cnt ?? 0,
     upcomingAppointments: upcomingAppointments[0]?.cnt ?? 0,
+    upcomingSurgeries: upcomingSurgeries[0]?.cnt ?? 0,
     currentDate: now.toLocaleDateString("ar-EG", { weekday: "long", year: "numeric", month: "long", day: "numeric" }),
   };
 }
 
-async function searchPatientByName(name: string) {
+async function searchPatientByName(name: string, tenantId: number) {
   const db = await getDb();
   if (!db) return [];
-  const results = await db.select({
+  return db.select({
     id: patients.id,
     fullName: patients.fullName,
     patientId: patients.patientId,
@@ -71,12 +74,11 @@ async function searchPatientByName(name: string) {
     medicalNotes: patients.medicalNotes,
     createdAt: patients.createdAt,
   }).from(patients)
-    .where(and(eq(patients.isDeleted, false), like(patients.fullName, `%${name}%`)))
+    .where(and(eq(patients.tenantId, tenantId), eq(patients.isDeleted, false), like(patients.fullName, `%${name}%`)))
     .limit(5);
-  return results;
 }
 
-async function getPatientVisits(patientId: number) {
+async function getPatientVisits(patientId: number, tenantId: number) {
   const db = await getDb();
   if (!db) return [];
   return db.select({
@@ -89,12 +91,12 @@ async function getPatientVisits(patientId: number) {
     status: visits.status,
     followUpDate: visits.followUpDate,
   }).from(visits)
-    .where(and(eq(visits.patientId, patientId), eq(visits.isDeleted, false)))
+    .where(and(eq(visits.tenantId, tenantId), eq(visits.patientId, patientId), eq(visits.isDeleted, false)))
     .orderBy(desc(visits.visitDate))
     .limit(10);
 }
 
-async function getPatientPrescriptions(patientId: number) {
+async function getPatientPrescriptions(patientId: number, tenantId: number) {
   const db = await getDb();
   if (!db) return [];
   return db.select({
@@ -104,9 +106,40 @@ async function getPatientPrescriptions(patientId: number) {
     treatmentName: prescriptions.treatmentName,
     notes: prescriptions.notes,
   }).from(prescriptions)
-    .where(and(eq(prescriptions.patientId, patientId), eq(prescriptions.isDeleted, false)))
+    .where(and(eq(prescriptions.tenantId, tenantId), eq(prescriptions.patientId, patientId), eq(prescriptions.isDeleted, false)))
     .orderBy(desc(prescriptions.prescriptionDate))
     .limit(5);
+}
+
+// Extract all possible name candidates from a message (2+ word sequences)
+function extractNameCandidates(message: string): string[] {
+  const stopWords = new Set([
+    "من", "في", "على", "عن", "مع", "هل", "ما", "ماذا", "كيف", "متى", "أين", "لماذا",
+    "اللي", "الي", "طلعلي", "اطلع", "اعرف", "ابحث", "بحث", "مريض", "حالة", "رقم",
+    "اسم", "بيانات", "ملف", "تليفون", "موبايل", "هاتف", "دكتور", "عيادة", "انا",
+    "انت", "هو", "هي", "احنا", "عايز", "عاوز", "ممكن", "لو", "لو", "كده", "كدا",
+    "ايه", "إيه", "بتاع", "بتاعت", "جيبلي", "جيب", "وريني", "ورني", "شوفلي",
+    "اخر", "آخر", "اول", "أول", "كل", "جميع", "بعض",
+  ]);
+
+  const words = message.split(/[\s،,؟?!.]+/).filter(w => w.length >= 2);
+  const candidates: string[] = [];
+
+  // Single words not in stopwords
+  for (const w of words) {
+    if (!stopWords.has(w)) {
+      candidates.push(w);
+    }
+  }
+
+  // Two-word combinations
+  for (let i = 0; i < words.length - 1; i++) {
+    if (!stopWords.has(words[i]) && !stopWords.has(words[i + 1])) {
+      candidates.push(`${words[i]} ${words[i + 1]}`);
+    }
+  }
+
+  return candidates;
 }
 
 // ─── Router ───────────────────────────────────────────────────────────────────
@@ -119,11 +152,14 @@ export const aiAssistantRouter = router({
         content: z.string(),
       })),
     }))
-    .mutation(async ({ input }) => {
-      // 1. Get clinic snapshot for context
-      const snapshot = await getClinicSnapshot();
+    .mutation(async ({ ctx, input }) => {
+            // 1. Get tenantId for this user
+      const tenantIdRaw = await getTenantId(ctx.user.email ?? "");
+      const tenantId = tenantIdRaw ?? 0;
+      // 2. Get clinic snapshot filtered by tenant
+      const snapshot = await getClinicSnapshot(tenantId);
 
-      // 2. Build system prompt with clinic data
+      // 3. Build system prompt
       const systemPrompt = `أنت مساعد ذكي لعيادة طبية. اسمك "مساعد العيادة". تتحدث باللغة العربية دائماً.
 لديك صلاحية الوصول لبيانات العيادة الحقيقية وتستطيع الإجابة على أسئلة الطبيب بدقة.
 
@@ -137,35 +173,33 @@ export const aiAssistantRouter = router({
 - زيارات آخر 30 يوم: ${snapshot?.visitsLast30Days ?? 0}
 - مواعيد اليوم: ${snapshot?.todayAppointments ?? 0}
 - مواعيد قادمة: ${snapshot?.upcomingAppointments ?? 0}
+- عمليات جراحية قادمة: ${snapshot?.upcomingSurgeries ?? 0}
 
 **تعليمات مهمة:**
-- إذا سأل الطبيب عن مريض بالاسم (مثل "طلعلي رقم فلان" أو "حالة فلان")، أخبره أنك ستبحث عنه وأجب بالبيانات المتاحة.
-- أجب بشكل مختصر وواضح.
-- إذا لم تجد معلومة، قل ذلك بصراحة.
-- لا تخترع بيانات غير موجودة.`;
+- أجب فقط بناءً على البيانات المقدمة لك. لا تخترع أي معلومات.
+- إذا لم تجد المعلومة في البيانات المتاحة، قل بصراحة "لا توجد هذه المعلومة في النظام".
+- أجب بشكل مختصر وواضح باللغة العربية.
+- إذا سأل عن مريض ولم يُذكر اسمه، اطلب منه ذكر الاسم.`;
 
-      // 3. Check if the last user message asks about a specific patient
+      // 4. Search for patient if query seems to be about a specific patient
       const lastUserMsg = input.messages[input.messages.length - 1]?.content ?? "";
       let patientContext = "";
 
-      // Simple name extraction: look for patterns like "فلان" or a name after keywords
-      const patientKeywords = ["مريض", "حالة", "رقم", "اسم", "بيانات", "ملف", "تليفون", "موبايل", "هاتف"];
+      const patientKeywords = ["مريض", "حالة", "رقم", "اسم", "بيانات", "ملف", "تليفون", "موبايل", "هاتف", "طلعلي", "وريني", "جيبلي", "شوفلي"];
       const hasPatientQuery = patientKeywords.some(k => lastUserMsg.includes(k));
 
-      if (hasPatientQuery) {
-        // Extract potential name: words that are 2+ chars, not keywords
-        const stopWords = new Set(["من", "في", "على", "عن", "مع", "هل", "ما", "ماذا", "كيف", "متى", "أين", "لماذا", "اللي", "الي", "طلعلي", "اطلع", "اعرف", "ابحث", "بحث", "مريض", "حالة", "رقم", "اسم", "بيانات", "ملف", "تليفون", "موبايل", "هاتف", "دكتور", "عيادة"]);
-        const words = lastUserMsg.split(/\s+/).filter(w => w.length >= 2 && !stopWords.has(w));
+      if (hasPatientQuery && tenantId !== null) {
+        const candidates = extractNameCandidates(lastUserMsg);
 
-        for (const word of words) {
-          const found = await searchPatientByName(word);
+        for (const candidate of candidates) {
+          const found = await searchPatientByName(candidate, tenantId);
           if (found.length > 0) {
             const p = found[0];
-            const pVisits = await getPatientVisits(p.id);
-            const pPrescriptions = await getPatientPrescriptions(p.id);
+            const pVisits = await getPatientVisits(p.id, tenantId);
+            const pPrescriptions = await getPatientPrescriptions(p.id, tenantId);
 
-            patientContext = `\n\n**بيانات المريض الذي تم العثور عليه:**
-- الاسم: ${p.fullName}
+            patientContext = `\n\n**✅ بيانات المريض الذي تم العثور عليه:**
+- الاسم الكامل: ${p.fullName}
 - رقم الملف: ${p.patientId}
 - رقم الهاتف: ${p.phone ?? "غير مسجل"}
 - الجنس: ${p.gender === "male" ? "ذكر" : p.gender === "female" ? "أنثى" : "غير محدد"}
@@ -174,26 +208,34 @@ export const aiAssistantRouter = router({
 - فصيلة الدم: ${p.bloodType ?? "غير مسجلة"}
 - الحساسية: ${p.allergies ?? "لا يوجد"}
 - الأمراض المزمنة: ${p.chronicDiseases ?? "لا يوجد"}
-- ملاحظات: ${p.medicalNotes ?? "لا يوجد"}
+- ملاحظات طبية: ${p.medicalNotes ?? "لا يوجد"}
 - تاريخ التسجيل: ${new Date(p.createdAt!).toLocaleDateString("ar-EG")}
 
-**آخر زيارات المريض (${pVisits.length} زيارة):**
+**آخر زيارات المريض (${pVisits.length} زيارة مسجلة):**
 ${pVisits.slice(0, 3).map((v, i) => `${i + 1}. ${new Date(v.visitDate!).toLocaleDateString("ar-EG")} — التشخيص: ${v.diagnosisText ?? v.chiefComplaint ?? "—"} — ملاحظات: ${v.doctorNotes ?? "—"}`).join("\n") || "لا توجد زيارات مسجلة"}
 
-**آخر وصفات طبية (${pPrescriptions.length}):**
-${pPrescriptions.slice(0, 2).map((rx, i) => { const meds = Array.isArray(rx.medications) ? rx.medications.map((m: any) => m.medicine).join("، ") : "—"; return `${i + 1}. ${new Date(rx.prescriptionDate!).toLocaleDateString("ar-EG")} — ${rx.treatmentName ?? meds}`; }).join("\n") || "لا توجد وصفات مسجلة"}`;
+**آخر وصفات طبية (${pPrescriptions.length} وصفة):**
+${pPrescriptions.slice(0, 3).map((rx, i) => {
+  const meds = Array.isArray(rx.medications) ? rx.medications.map((m: any) => m.medicine ?? m.name ?? "").filter(Boolean).join("، ") : "—";
+  return `${i + 1}. ${new Date(rx.prescriptionDate!).toLocaleDateString("ar-EG")} — ${rx.treatmentName ?? meds}`;
+}).join("\n") || "لا توجد وصفات مسجلة"}`;
             break;
           }
         }
+
+        // If no patient found, tell the AI
+        if (!patientContext) {
+          patientContext = `\n\n**⚠️ ملاحظة:** تم البحث في قاعدة البيانات ولم يُعثر على مريض بهذا الاسم. أخبر الطبيب بذلك وأطلب منه التأكد من الاسم.`;
+        }
       }
 
-      // 4. Call LLM
+      // 5. Call LLM
       const result = await invokeLLM({
         messages: [
           { role: "system", content: systemPrompt + patientContext },
           ...input.messages.map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
         ],
-        maxTokens: 1000,
+        maxTokens: 1200,
       });
 
       const reply = result.choices[0]?.message?.content;
