@@ -254,13 +254,15 @@ export async function getVisitsPaginated(opts: {
   return { data, total: totalResult[0]?.cnt ?? 0 };
 }
 
-export async function getFollowUpPatients(): Promise<Visit[]> {
+export async function getFollowUpPatients(tenantId?: number): Promise<Visit[]> {
   const db = await getDb();
   if (!db) return [];
   const now = new Date();
   const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const conditions = [eq(visits.isDeleted, false), gte(visits.followUpDate, now), lte(visits.followUpDate, nextWeek)];
+  if (tenantId !== undefined) conditions.push(eq(visits.tenantId, tenantId) as any);
   return db.select().from(visits)
-    .where(and(eq(visits.isDeleted, false), gte(visits.followUpDate, now), lte(visits.followUpDate, nextWeek)))
+    .where(and(...conditions))
     .orderBy(asc(visits.followUpDate)).limit(10);
 }
 

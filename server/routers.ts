@@ -18,7 +18,7 @@ import { tenantsRouter } from "./routers/tenants";
 import {
   getPatientCount, getTodayAppointmentCount, getRecentPatients,
   getRecentVisits, getFollowUpPatients, getMonthlyPatientStats,
-  getMonthlyVisitStats, getRecentActivities, getAllUsers,
+  getMonthlyVisitStats, getRecentActivities, getAllUsers, getTenantId,
 } from "./db";
 
 export const appRouter = router({
@@ -35,16 +35,17 @@ export const appRouter = router({
 
   dashboard: router({
     stats: publicProcedure.query(async ({ ctx }) => {
+      const tenantId = ctx.user?.email ? await getTenantId(ctx.user.email) : undefined;
       const [patientCount, todayAppts, recentPatients, recentVisits, followUps, monthlyPatients, monthlyVisits, activities] =
         await Promise.all([
-          getPatientCount(),
-          getTodayAppointmentCount(ctx.user?.role === "doctor" ? ctx.user.id : undefined),
-          getRecentPatients(5),
-          getRecentVisits(5),
-          getFollowUpPatients(),
-          getMonthlyPatientStats(),
-          getMonthlyVisitStats(),
-          getRecentActivities(8),
+          getPatientCount(tenantId ?? undefined),
+          getTodayAppointmentCount(ctx.user?.role === "doctor" ? ctx.user.id : undefined, tenantId ?? undefined),
+          getRecentPatients(5, tenantId ?? undefined),
+          getRecentVisits(5, tenantId ?? undefined),
+          getFollowUpPatients(tenantId ?? undefined),
+          getMonthlyPatientStats(tenantId ?? undefined),
+          getMonthlyVisitStats(tenantId ?? undefined),
+          getRecentActivities(8, tenantId ?? undefined),
         ]);
       return { patientCount, todayAppts, recentPatients, recentVisits, followUps, monthlyPatients, monthlyVisits, activities };
     }),
