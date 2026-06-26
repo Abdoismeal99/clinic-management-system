@@ -47,8 +47,34 @@ export async function getTenantId(email: string | null | undefined): Promise<num
   const db = await getDb();
   if (!db) return null;
   const { eq } = await import("drizzle-orm");
-  const result = await db.select({ id: tenants.id }).from(tenants).where(eq(tenants.email, email)).limit(1);
-  return result[0]?.id ?? null;
+  // First try to get tenantId directly from users table (fast path)
+  const userResult = await db.select({ tenantId: users.tenantId }).from(users).where(eq(users.email, email)).limit(1);
+  if (userResult[0]?.tenantId) return userResult[0].tenantId;
+  // Fallback: check if email matches a tenant's email (for clinic_admin first login)
+  const tenantResult = await db.select({ id: tenants.id }).from(tenants).where(eq(tenants.email, email)).limit(1);
+  return tenantResult[0]?.id ?? null;
+}
+
+// Link a user to a tenant (called when clinic admin activates their account)
+export async function linkUserToTenant(userId: number, tenantId: number, tenantRole: "clinic_admin" | "staff"): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({ tenantId, tenantRole }).where(eq(users.id, userId));
+}
+
+// Get all users belonging to a specific tenant
+export async function getUsersByTenant(tenantId: number): Promise<User[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(users).where(and(eq(users.tenantId, tenantId), eq(users.isActive, true))).orderBy(asc(users.name));
+}
+
+// Get all unassigned users (no tenant yet)
+export async function getUnassignedUsers(): Promise<User[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const { isNull } = await import("drizzle-orm");
+  return db.select().from(users).where(and(isNull(users.tenantId), eq(users.isActive, true))).orderBy(asc(users.name));
 }
 
 // ─── Users ───────────────────────────────────────────────────────────────────
@@ -76,6 +102,19 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = new Date();
 
   await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
+
+  // Auto-link to tenant if email matches a tenant and user has no tenantId yet
+  if (user.email) {
+    const existing = await db.select({ id: users.id, tenantId: users.tenantId }).from(users).where(eq(users.openId, user.openId)).limit(1);
+    const existingUser = existing[0];
+    if (existingUser && !existingUser.tenantId) {
+      // Check if this email matches a tenant
+      const tenantMatch = await db.select({ id: tenants.id }).from(tenants).where(eq(tenants.email, user.email)).limit(1);
+      if (tenantMatch[0]) {
+        await db.update(users).set({ tenantId: tenantMatch[0].id, tenantRole: "clinic_admin" }).where(eq(users.id, existingUser.id));
+      }
+    }
+  }
 }
 
 export async function getUserByOpenId(openId: string): Promise<User | undefined> {
@@ -85,9 +124,12 @@ export async function getUserByOpenId(openId: string): Promise<User | undefined>
   return result[0];
 }
 
-export async function getAllUsers(): Promise<User[]> {
+export async function getAllUsers(tenantId?: number): Promise<User[]> {
   const db = await getDb();
   if (!db) return [];
+  if (tenantId !== undefined) {
+    return db.select().from(users).where(and(eq(users.isActive, true), eq(users.tenantId, tenantId))).orderBy(asc(users.name));
+  }
   return db.select().from(users).where(eq(users.isActive, true)).orderBy(asc(users.name));
 }
 
@@ -99,7 +141,7 @@ export async function getDoctors(): Promise<User[]> {
     .orderBy(asc(users.name));
 }
 
-export async function updateUserProfile(userId: number, data: Partial<Pick<User, "name" | "email" | "specialty" | "phone" | "avatarUrl" | "role">>): Promise<void> {
+export async function updateUserProfile(userId: number, data: Partial<Pick<User, "name" | "email" | "specialty" | "phone" | "avatarUrl" | "role" | "tenantId" | "tenantRole">>): Promise<void> {
   const db = await getDb();
   if (!db) return;
   await db.update(users).set({ ...data, updatedAt: new Date() }).where(eq(users.id, userId));

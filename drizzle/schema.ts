@@ -19,6 +19,10 @@ export const users = mysqlTable("users", {
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin", "doctor", "assistant"]).default("user").notNull(),
+  // tenantId links this user to a specific clinic. NULL = not assigned yet (pending). Super admin has tenantId = NULL but role = admin.
+  tenantId: int("tenantId"),
+  // tenantRole: role within their own clinic (admin = clinic admin, staff = regular staff)
+  tenantRole: mysqlEnum("tenantRole", ["clinic_admin", "staff"]).default("staff"),
   specialty: varchar("specialty", { length: 128 }),
   phone: varchar("phone", { length: 32 }),
   avatarUrl: text("avatarUrl"),
