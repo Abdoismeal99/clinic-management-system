@@ -2,12 +2,21 @@ import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { invokeLLM } from "../_core/llm";
 import { getDb, getTenantId } from "../db";
-import { patients, visits, appointments, prescriptions, surgeries, clinicDoctors, surgeryTypes } from "../../drizzle/schema";
-import { and, count, desc, eq, gte, like, lte, sql } from "drizzle-orm";
+import {
+  patients,
+  visits,
+  appointments,
+  prescriptions,
+  surgeries,
+  clinicDoctors,
+  surgeryTypes,
+  settings,
+} from "../../drizzle/schema";
+import { and, count, desc, eq, gte, lte, asc } from "drizzle-orm";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Fetch all clinic data for a tenant ───────────────────────────────────────
 
-async function getClinicSnapshot(tenantId: number) {
+async function getAllClinicData(tenantId: number) {
   const db = await getDb();
   if (!db) return null;
 
@@ -17,8 +26,15 @@ async function getClinicSnapshot(tenantId: number) {
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
+  const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
   const [
+    allPatients,
+    allDoctors,
+    allSurgeryTypes,
+    todayAppts,
+    upcomingAppts,
+    upcomingSurgs,
     totalPatients,
     newPatientsLast3Days,
     newPatientsLast7Days,
@@ -26,10 +42,116 @@ async function getClinicSnapshot(tenantId: number) {
     visitsLast3Days,
     visitsLast7Days,
     visitsLast30Days,
-    todayAppointments,
-    upcomingAppointments,
-    upcomingSurgeries,
+    clinicSettingsRows,
   ] = await Promise.all([
+    // All patients
+    db
+      .select({
+        id: patients.id,
+        fullName: patients.fullName,
+        patientId: patients.patientId,
+        phone: patients.phone,
+        gender: patients.gender,
+        dateOfBirth: patients.dateOfBirth,
+        status: patients.status,
+        bloodType: patients.bloodType,
+        allergies: patients.allergies,
+        chronicDiseases: patients.chronicDiseases,
+        medicalNotes: patients.medicalNotes,
+        createdAt: patients.createdAt,
+      })
+      .from(patients)
+      .where(and(eq(patients.tenantId, tenantId), eq(patients.isDeleted, false)))
+      .orderBy(desc(patients.createdAt))
+      .limit(500),
+
+    // All clinic doctors
+    db
+      .select({
+        id: clinicDoctors.id,
+        name: clinicDoctors.name,
+        specialty: clinicDoctors.specialty,
+        phone: clinicDoctors.phone,
+        isActive: clinicDoctors.isActive,
+      })
+      .from(clinicDoctors)
+      .where(eq(clinicDoctors.tenantId, tenantId))
+      .orderBy(asc(clinicDoctors.name)),
+
+    // All surgery types
+    db
+      .select({ id: surgeryTypes.id, name: surgeryTypes.name, description: surgeryTypes.description })
+      .from(surgeryTypes)
+      .where(eq(surgeryTypes.tenantId, tenantId)),
+
+    // Today's appointments with patient + doctor names via join
+    db
+      .select({
+        id: appointments.id,
+        patientName: patients.fullName,
+        doctorName: clinicDoctors.name,
+        appointmentDate: appointments.appointmentDate,
+        reason: appointments.reason,
+        status: appointments.status,
+      })
+      .from(appointments)
+      .leftJoin(patients, eq(appointments.patientId, patients.id))
+      .leftJoin(clinicDoctors, eq(appointments.doctorId, clinicDoctors.id))
+      .where(
+        and(
+          eq(appointments.tenantId, tenantId),
+          eq(appointments.isDeleted, false),
+          gte(appointments.appointmentDate, todayStart),
+          lte(appointments.appointmentDate, todayEnd)
+        )
+      )
+      .orderBy(asc(appointments.appointmentDate))
+      .limit(20),
+
+    // Upcoming appointments (next 7 days)
+    db
+      .select({
+        id: appointments.id,
+        patientName: patients.fullName,
+        doctorName: clinicDoctors.name,
+        appointmentDate: appointments.appointmentDate,
+        reason: appointments.reason,
+        status: appointments.status,
+      })
+      .from(appointments)
+      .leftJoin(patients, eq(appointments.patientId, patients.id))
+      .leftJoin(clinicDoctors, eq(appointments.doctorId, clinicDoctors.id))
+      .where(
+        and(
+          eq(appointments.tenantId, tenantId),
+          eq(appointments.isDeleted, false),
+          gte(appointments.appointmentDate, now),
+          lte(appointments.appointmentDate, nextWeek)
+        )
+      )
+      .orderBy(asc(appointments.appointmentDate))
+      .limit(20),
+
+    // Upcoming surgeries with patient + doctor + surgery type names
+    db
+      .select({
+        id: surgeries.id,
+        patientName: patients.fullName,
+        doctorName: clinicDoctors.name,
+        surgeryTypeName: surgeryTypes.name,
+        surgeryDate: surgeries.surgeryDate,
+        status: surgeries.status,
+        notes: surgeries.notes,
+      })
+      .from(surgeries)
+      .leftJoin(patients, eq(surgeries.patientId, patients.id))
+      .leftJoin(clinicDoctors, eq(surgeries.doctorId, clinicDoctors.id))
+      .leftJoin(surgeryTypes, eq(surgeries.surgeryTypeId, surgeryTypes.id))
+      .where(and(eq(surgeries.tenantId, tenantId), gte(surgeries.surgeryDate, now)))
+      .orderBy(asc(surgeries.surgeryDate))
+      .limit(10),
+
+    // Stats
     db.select({ cnt: count() }).from(patients).where(and(eq(patients.tenantId, tenantId), eq(patients.isDeleted, false))),
     db.select({ cnt: count() }).from(patients).where(and(eq(patients.tenantId, tenantId), eq(patients.isDeleted, false), gte(patients.createdAt, threeDaysAgo))),
     db.select({ cnt: count() }).from(patients).where(and(eq(patients.tenantId, tenantId), eq(patients.isDeleted, false), gte(patients.createdAt, sevenDaysAgo))),
@@ -37,209 +159,290 @@ async function getClinicSnapshot(tenantId: number) {
     db.select({ cnt: count() }).from(visits).where(and(eq(visits.tenantId, tenantId), eq(visits.isDeleted, false), gte(visits.visitDate, threeDaysAgo))),
     db.select({ cnt: count() }).from(visits).where(and(eq(visits.tenantId, tenantId), eq(visits.isDeleted, false), gte(visits.visitDate, sevenDaysAgo))),
     db.select({ cnt: count() }).from(visits).where(and(eq(visits.tenantId, tenantId), eq(visits.isDeleted, false), gte(visits.visitDate, thirtyDaysAgo))),
-    db.select({ cnt: count() }).from(appointments).where(and(eq(appointments.tenantId, tenantId), eq(appointments.isDeleted, false), gte(appointments.appointmentDate, todayStart), lte(appointments.appointmentDate, todayEnd))),
-    db.select({ cnt: count() }).from(appointments).where(and(eq(appointments.tenantId, tenantId), eq(appointments.isDeleted, false), gte(appointments.appointmentDate, now))),
-    db.select({ cnt: count() }).from(surgeries).where(and(eq(surgeries.tenantId, tenantId), gte(surgeries.surgeryDate, now))),
+
+    // Clinic settings
+    db.select().from(settings).where(eq(settings.tenantId, tenantId)).limit(1),
   ]);
 
   return {
-    totalPatients: totalPatients[0]?.cnt ?? 0,
-    newPatientsLast3Days: newPatientsLast3Days[0]?.cnt ?? 0,
-    newPatientsLast7Days: newPatientsLast7Days[0]?.cnt ?? 0,
-    newPatientsLast30Days: newPatientsLast30Days[0]?.cnt ?? 0,
-    visitsLast3Days: visitsLast3Days[0]?.cnt ?? 0,
-    visitsLast7Days: visitsLast7Days[0]?.cnt ?? 0,
-    visitsLast30Days: visitsLast30Days[0]?.cnt ?? 0,
-    todayAppointments: todayAppointments[0]?.cnt ?? 0,
-    upcomingAppointments: upcomingAppointments[0]?.cnt ?? 0,
-    upcomingSurgeries: upcomingSurgeries[0]?.cnt ?? 0,
+    allPatients,
+    allDoctors,
+    allSurgeryTypes,
+    todayAppts,
+    upcomingAppts,
+    upcomingSurgs,
+    stats: {
+      totalPatients: totalPatients[0]?.cnt ?? 0,
+      newPatientsLast3Days: newPatientsLast3Days[0]?.cnt ?? 0,
+      newPatientsLast7Days: newPatientsLast7Days[0]?.cnt ?? 0,
+      newPatientsLast30Days: newPatientsLast30Days[0]?.cnt ?? 0,
+      visitsLast3Days: visitsLast3Days[0]?.cnt ?? 0,
+      visitsLast7Days: visitsLast7Days[0]?.cnt ?? 0,
+      visitsLast30Days: visitsLast30Days[0]?.cnt ?? 0,
+      todayAppointments: todayAppts.length,
+      upcomingAppointments: upcomingAppts.length,
+      upcomingSurgeries: upcomingSurgs.length,
+    },
+    clinicName: (clinicSettingsRows[0] as any)?.clinicName ?? "العيادة",
     currentDate: now.toLocaleDateString("ar-EG", { weekday: "long", year: "numeric", month: "long", day: "numeric" }),
   };
 }
 
-async function searchPatientByName(name: string, tenantId: number) {
+// Fetch full patient details + visits + prescriptions + surgeries by patient DB id
+async function getFullPatientData(patientDbId: number, tenantId: number) {
   const db = await getDb();
-  if (!db) return [];
-  return db.select({
-    id: patients.id,
-    fullName: patients.fullName,
-    patientId: patients.patientId,
-    phone: patients.phone,
-    gender: patients.gender,
-    dateOfBirth: patients.dateOfBirth,
-    status: patients.status,
-    bloodType: patients.bloodType,
-    allergies: patients.allergies,
-    chronicDiseases: patients.chronicDiseases,
-    medicalNotes: patients.medicalNotes,
-    createdAt: patients.createdAt,
-  }).from(patients)
-    .where(and(eq(patients.tenantId, tenantId), eq(patients.isDeleted, false), like(patients.fullName, `%${name}%`)))
-    .limit(5);
-}
+  if (!db) return null;
 
-async function getPatientVisits(patientId: number, tenantId: number) {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select({
-    id: visits.id,
-    visitDate: visits.visitDate,
-    diagnosisText: visits.diagnosisText,
-    chiefComplaint: visits.chiefComplaint,
-    symptoms: visits.symptoms,
-    doctorNotes: visits.doctorNotes,
-    status: visits.status,
-    followUpDate: visits.followUpDate,
-  }).from(visits)
-    .where(and(eq(visits.tenantId, tenantId), eq(visits.patientId, patientId), eq(visits.isDeleted, false)))
-    .orderBy(desc(visits.visitDate))
-    .limit(10);
-}
+  const [patientVisits, patientPrescriptions, patientSurgeries] = await Promise.all([
+    db
+      .select({
+        visitDate: visits.visitDate,
+        diagnosisText: visits.diagnosisText,
+        chiefComplaint: visits.chiefComplaint,
+        symptoms: visits.symptoms,
+        doctorNotes: visits.doctorNotes,
+        status: visits.status,
+        followUpDate: visits.followUpDate,
+      })
+      .from(visits)
+      .where(and(eq(visits.tenantId, tenantId), eq(visits.patientId, patientDbId), eq(visits.isDeleted, false)))
+      .orderBy(desc(visits.visitDate))
+      .limit(10),
 
-async function getPatientPrescriptions(patientId: number, tenantId: number) {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select({
-    id: prescriptions.id,
-    prescriptionDate: prescriptions.prescriptionDate,
-    medications: prescriptions.medications,
-    treatmentName: prescriptions.treatmentName,
-    notes: prescriptions.notes,
-  }).from(prescriptions)
-    .where(and(eq(prescriptions.tenantId, tenantId), eq(prescriptions.patientId, patientId), eq(prescriptions.isDeleted, false)))
-    .orderBy(desc(prescriptions.prescriptionDate))
-    .limit(5);
-}
+    db
+      .select({
+        prescriptionDate: prescriptions.prescriptionDate,
+        medications: prescriptions.medications,
+        treatmentName: prescriptions.treatmentName,
+        notes: prescriptions.notes,
+      })
+      .from(prescriptions)
+      .where(and(eq(prescriptions.tenantId, tenantId), eq(prescriptions.patientId, patientDbId), eq(prescriptions.isDeleted, false)))
+      .orderBy(desc(prescriptions.prescriptionDate))
+      .limit(5),
 
-// Extract all possible name candidates from a message (2+ word sequences)
-function extractNameCandidates(message: string): string[] {
-  const stopWords = new Set([
-    "من", "في", "على", "عن", "مع", "هل", "ما", "ماذا", "كيف", "متى", "أين", "لماذا",
-    "اللي", "الي", "طلعلي", "اطلع", "اعرف", "ابحث", "بحث", "مريض", "حالة", "رقم",
-    "اسم", "بيانات", "ملف", "تليفون", "موبايل", "هاتف", "دكتور", "عيادة", "انا",
-    "انت", "هو", "هي", "احنا", "عايز", "عاوز", "ممكن", "لو", "لو", "كده", "كدا",
-    "ايه", "إيه", "بتاع", "بتاعت", "جيبلي", "جيب", "وريني", "ورني", "شوفلي",
-    "اخر", "آخر", "اول", "أول", "كل", "جميع", "بعض",
+    db
+      .select({
+        surgeryDate: surgeries.surgeryDate,
+        surgeryTypeName: surgeryTypes.name,
+        doctorName: clinicDoctors.name,
+        status: surgeries.status,
+        notes: surgeries.notes,
+      })
+      .from(surgeries)
+      .leftJoin(surgeryTypes, eq(surgeries.surgeryTypeId, surgeryTypes.id))
+      .leftJoin(clinicDoctors, eq(surgeries.doctorId, clinicDoctors.id))
+      .where(and(eq(surgeries.tenantId, tenantId), eq(surgeries.patientId, patientDbId)))
+      .orderBy(desc(surgeries.surgeryDate))
+      .limit(5),
   ]);
 
-  const words = message.split(/[\s،,؟?!.]+/).filter(w => w.length >= 2);
-  const candidates: string[] = [];
+  return { patientVisits, patientPrescriptions, patientSurgeries };
+}
 
-  // Single words not in stopwords
-  for (const w of words) {
-    if (!stopWords.has(w)) {
-      candidates.push(w);
-    }
-  }
+// ─── Build system prompt ───────────────────────────────────────────────────────
 
-  // Two-word combinations
-  for (let i = 0; i < words.length - 1; i++) {
-    if (!stopWords.has(words[i]) && !stopWords.has(words[i + 1])) {
-      candidates.push(`${words[i]} ${words[i + 1]}`);
-    }
-  }
+function buildSystemPrompt(data: NonNullable<Awaited<ReturnType<typeof getAllClinicData>>>) {
+  const { stats, currentDate, clinicName, allPatients, allDoctors, allSurgeryTypes, todayAppts, upcomingAppts, upcomingSurgs } = data;
 
-  return candidates;
+  const patientsList = allPatients.length > 0
+    ? allPatients.map(p =>
+        `  • ${p.fullName} | ملف: ${p.patientId} | هاتف: ${p.phone ?? "غير مسجل"} | الحالة: ${p.status ?? "—"} | الجنس: ${p.gender === "male" ? "ذكر" : p.gender === "female" ? "أنثى" : "—"} | فصيلة الدم: ${p.bloodType ?? "—"} | أمراض مزمنة: ${p.chronicDiseases ?? "لا"} | حساسية: ${p.allergies ?? "لا"}`
+      ).join("\n")
+    : "  لا يوجد مرضى مسجلون بعد";
+
+  const doctorsList = allDoctors.length > 0
+    ? allDoctors.map(d =>
+        `  • ${d.name} | التخصص: ${d.specialty ?? "—"} | هاتف: ${d.phone ?? "—"} | الحالة: ${d.isActive ? "نشط" : "غير نشط"}`
+      ).join("\n")
+    : "  لا يوجد أطباء مسجلون";
+
+  const surgeryTypesList = allSurgeryTypes.length > 0
+    ? allSurgeryTypes.map(s => `  • ${s.name}${s.description ? ` — ${s.description}` : ""}`).join("\n")
+    : "  لا يوجد أنواع عمليات مسجلة";
+
+  const todayApptsList = todayAppts.length > 0
+    ? todayAppts.map(a =>
+        `  • ${a.patientName ?? "—"} | الوقت: ${a.appointmentDate ? new Date(a.appointmentDate).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }) : "—"} | الطبيب: ${a.doctorName ?? "—"} | السبب: ${a.reason ?? "—"} | الحالة: ${a.status ?? "—"}`
+      ).join("\n")
+    : "  لا توجد مواعيد اليوم";
+
+  const upcomingApptsList = upcomingAppts.length > 0
+    ? upcomingAppts.map(a =>
+        `  • ${a.patientName ?? "—"} | التاريخ: ${a.appointmentDate ? new Date(a.appointmentDate).toLocaleDateString("ar-EG") : "—"} | الطبيب: ${a.doctorName ?? "—"} | السبب: ${a.reason ?? "—"}`
+      ).join("\n")
+    : "  لا توجد مواعيد قادمة";
+
+  const upcomingSurgsList = upcomingSurgs.length > 0
+    ? upcomingSurgs.map(s =>
+        `  • ${s.patientName ?? "—"} | التاريخ: ${s.surgeryDate ? new Date(s.surgeryDate).toLocaleDateString("ar-EG") : "—"} | نوع العملية: ${s.surgeryTypeName ?? "—"} | الطبيب: ${s.doctorName ?? "—"} | الحالة: ${s.status ?? "—"}`
+      ).join("\n")
+    : "  لا توجد عمليات جراحية قادمة";
+
+  return `أنت مساعد ذكي لعيادة "${clinicName}". اسمك "مساعد العيادة". تتحدث باللغة العربية دائماً وتجيب بشكل مختصر وواضح.
+لديك صلاحية الوصول الكامل لجميع بيانات العيادة الحقيقية المذكورة أدناه.
+
+📅 **التاريخ الحالي:** ${currentDate}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 **إحصائيات العيادة:**
+- إجمالي المرضى: ${stats.totalPatients}
+- مرضى جدد (3 أيام): ${stats.newPatientsLast3Days}
+- مرضى جدد (7 أيام): ${stats.newPatientsLast7Days}
+- مرضى جدد (30 يوم): ${stats.newPatientsLast30Days}
+- زيارات (3 أيام): ${stats.visitsLast3Days}
+- زيارات (7 أيام): ${stats.visitsLast7Days}
+- زيارات (30 يوم): ${stats.visitsLast30Days}
+- مواعيد اليوم: ${stats.todayAppointments}
+- مواعيد قادمة (7 أيام): ${stats.upcomingAppointments}
+- عمليات قادمة: ${stats.upcomingSurgeries}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👨‍⚕️ **أطباء العيادة (${allDoctors.length} طبيب):**
+${doctorsList}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔪 **أنواع العمليات الجراحية:**
+${surgeryTypesList}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 **مواعيد اليوم (${todayAppts.length} موعد):**
+${todayApptsList}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📅 **المواعيد القادمة (7 أيام):**
+${upcomingApptsList}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🏥 **العمليات الجراحية القادمة:**
+${upcomingSurgsList}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧑‍🤝‍🧑 **قائمة المرضى المسجلين (${allPatients.length} مريض):**
+${patientsList}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**تعليمات:**
+- أجب فقط بناءً على البيانات المذكورة أعلاه.
+- إذا سُئلت عن مريض، ابحث في قائمة المرضى بالاسم أو جزء منه وأعطِ كل معلوماته.
+- إذا سُئلت عن طبيب، ابحث في قائمة الأطباء وأعطِ كل معلوماته.
+- لا تخترع أي معلومات غير موجودة في البيانات.
+- إذا لم تجد المعلومة، قل "لا توجد هذه المعلومة في النظام حالياً".`;
 }
 
 // ─── Router ───────────────────────────────────────────────────────────────────
 
 export const aiAssistantRouter = router({
   chat: protectedProcedure
-    .input(z.object({
-      messages: z.array(z.object({
-        role: z.enum(["user", "assistant"]),
-        content: z.string(),
-      })),
-    }))
+    .input(
+      z.object({
+        messages: z.array(
+          z.object({
+            role: z.enum(["user", "assistant"]),
+            content: z.string(),
+          })
+        ),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
-            // 1. Get tenantId for this user
+      // 1. Get tenantId
       const tenantIdRaw = await getTenantId(ctx.user.email ?? "");
       const tenantId = tenantIdRaw ?? 0;
-      // 2. Get clinic snapshot filtered by tenant
-      const snapshot = await getClinicSnapshot(tenantId);
 
-      // 3. Build system prompt
-      const systemPrompt = `أنت مساعد ذكي لعيادة طبية. اسمك "مساعد العيادة". تتحدث باللغة العربية دائماً.
-لديك صلاحية الوصول لبيانات العيادة الحقيقية وتستطيع الإجابة على أسئلة الطبيب بدقة.
+      // 2. Fetch ALL clinic data for this tenant
+      const clinicData = await getAllClinicData(tenantId);
 
-📊 **إحصائيات العيادة الحالية (${snapshot?.currentDate ?? "اليوم"}):**
-- إجمالي المرضى المسجلين: ${snapshot?.totalPatients ?? 0} مريض
-- مرضى جدد آخر 3 أيام: ${snapshot?.newPatientsLast3Days ?? 0}
-- مرضى جدد آخر 7 أيام: ${snapshot?.newPatientsLast7Days ?? 0}
-- مرضى جدد آخر 30 يوم: ${snapshot?.newPatientsLast30Days ?? 0}
-- زيارات آخر 3 أيام: ${snapshot?.visitsLast3Days ?? 0}
-- زيارات آخر 7 أيام: ${snapshot?.visitsLast7Days ?? 0}
-- زيارات آخر 30 يوم: ${snapshot?.visitsLast30Days ?? 0}
-- مواعيد اليوم: ${snapshot?.todayAppointments ?? 0}
-- مواعيد قادمة: ${snapshot?.upcomingAppointments ?? 0}
-- عمليات جراحية قادمة: ${snapshot?.upcomingSurgeries ?? 0}
+      // 3. Build system prompt with full data
+      const systemPrompt = clinicData
+        ? buildSystemPrompt(clinicData)
+        : `أنت مساعد ذكي لعيادة طبية. تتحدث باللغة العربية دائماً. قاعدة البيانات غير متاحة حالياً.`;
 
-**تعليمات مهمة:**
-- أجب فقط بناءً على البيانات المقدمة لك. لا تخترع أي معلومات.
-- إذا لم تجد المعلومة في البيانات المتاحة، قل بصراحة "لا توجد هذه المعلومة في النظام".
-- أجب بشكل مختصر وواضح باللغة العربية.
-- إذا سأل عن مريض ولم يُذكر اسمه، اطلب منه ذكر الاسم.`;
-
-      // 4. Search for patient if query seems to be about a specific patient
+      // 4. Check if user is asking about a specific patient — fetch full history
       const lastUserMsg = input.messages[input.messages.length - 1]?.content ?? "";
-      let patientContext = "";
+      let extraContext = "";
 
-      const patientKeywords = ["مريض", "حالة", "رقم", "اسم", "بيانات", "ملف", "تليفون", "موبايل", "هاتف", "طلعلي", "وريني", "جيبلي", "شوفلي"];
-      const hasPatientQuery = patientKeywords.some(k => lastUserMsg.includes(k));
+      if (clinicData && clinicData.allPatients.length > 0) {
+        // Normalize message (strip diacritics)
+        const msgNormalized = lastUserMsg.replace(/[ًٌٍَُِّْ]/g, "").toLowerCase();
 
-      if (hasPatientQuery && tenantId !== null) {
-        const candidates = extractNameCandidates(lastUserMsg);
+        // Try to find a matching patient by any part of their name
+        const matchedPatient = clinicData.allPatients.find(p => {
+          const nameParts = p.fullName.replace(/[ًٌٍَُِّْ]/g, "").split(/\s+/);
+          return nameParts.some(part => part.length >= 2 && msgNormalized.includes(part.toLowerCase()));
+        });
 
-        for (const candidate of candidates) {
-          const found = await searchPatientByName(candidate, tenantId);
-          if (found.length > 0) {
-            const p = found[0];
-            const pVisits = await getPatientVisits(p.id, tenantId);
-            const pPrescriptions = await getPatientPrescriptions(p.id, tenantId);
+        if (matchedPatient) {
+          const fullData = await getFullPatientData(matchedPatient.id, tenantId);
+          if (fullData) {
+            const { patientVisits, patientPrescriptions, patientSurgeries } = fullData;
 
-            patientContext = `\n\n**✅ بيانات المريض الذي تم العثور عليه:**
-- الاسم الكامل: ${p.fullName}
-- رقم الملف: ${p.patientId}
-- رقم الهاتف: ${p.phone ?? "غير مسجل"}
-- الجنس: ${p.gender === "male" ? "ذكر" : p.gender === "female" ? "أنثى" : "غير محدد"}
-- تاريخ الميلاد: ${p.dateOfBirth ? new Date(p.dateOfBirth).toLocaleDateString("ar-EG") : "غير مسجل"}
-- الحالة: ${p.status ?? "غير محدد"}
-- فصيلة الدم: ${p.bloodType ?? "غير مسجلة"}
-- الحساسية: ${p.allergies ?? "لا يوجد"}
-- الأمراض المزمنة: ${p.chronicDiseases ?? "لا يوجد"}
-- ملاحظات طبية: ${p.medicalNotes ?? "لا يوجد"}
-- تاريخ التسجيل: ${new Date(p.createdAt!).toLocaleDateString("ar-EG")}
+            const visitsText = patientVisits.length > 0
+              ? patientVisits.map((v, i) =>
+                  `  ${i + 1}. ${v.visitDate ? new Date(v.visitDate).toLocaleDateString("ar-EG") : "—"} | التشخيص: ${v.diagnosisText ?? v.chiefComplaint ?? "—"} | ملاحظات: ${v.doctorNotes ?? "—"} | المتابعة: ${v.followUpDate ? new Date(v.followUpDate).toLocaleDateString("ar-EG") : "لا"}`
+                ).join("\n")
+              : "  لا توجد زيارات مسجلة";
 
-**آخر زيارات المريض (${pVisits.length} زيارة مسجلة):**
-${pVisits.slice(0, 3).map((v, i) => `${i + 1}. ${new Date(v.visitDate!).toLocaleDateString("ar-EG")} — التشخيص: ${v.diagnosisText ?? v.chiefComplaint ?? "—"} — ملاحظات: ${v.doctorNotes ?? "—"}`).join("\n") || "لا توجد زيارات مسجلة"}
+            const rxText = patientPrescriptions.length > 0
+              ? patientPrescriptions.map((rx, i) => {
+                  const meds = Array.isArray(rx.medications)
+                    ? rx.medications.map((m: any) => m.medicine ?? m.name ?? "").filter(Boolean).join("، ")
+                    : "—";
+                  return `  ${i + 1}. ${rx.prescriptionDate ? new Date(rx.prescriptionDate).toLocaleDateString("ar-EG") : "—"} | ${rx.treatmentName ?? meds} | ملاحظات: ${rx.notes ?? "—"}`;
+                }).join("\n")
+              : "  لا توجد وصفات مسجلة";
 
-**آخر وصفات طبية (${pPrescriptions.length} وصفة):**
-${pPrescriptions.slice(0, 3).map((rx, i) => {
-  const meds = Array.isArray(rx.medications) ? rx.medications.map((m: any) => m.medicine ?? m.name ?? "").filter(Boolean).join("، ") : "—";
-  return `${i + 1}. ${new Date(rx.prescriptionDate!).toLocaleDateString("ar-EG")} — ${rx.treatmentName ?? meds}`;
-}).join("\n") || "لا توجد وصفات مسجلة"}`;
-            break;
+            const surgsText = patientSurgeries.length > 0
+              ? patientSurgeries.map((s, i) =>
+                  `  ${i + 1}. ${s.surgeryDate ? new Date(s.surgeryDate).toLocaleDateString("ar-EG") : "—"} | ${s.surgeryTypeName ?? "—"} | الطبيب: ${s.doctorName ?? "—"} | الحالة: ${s.status ?? "—"}`
+                ).join("\n")
+              : "  لا توجد عمليات مسجلة";
+
+            extraContext = `
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 **تفاصيل المريض المطلوب: ${matchedPatient.fullName}**
+- رقم الملف: ${matchedPatient.patientId}
+- الهاتف: ${matchedPatient.phone ?? "غير مسجل"}
+- الجنس: ${matchedPatient.gender === "male" ? "ذكر" : matchedPatient.gender === "female" ? "أنثى" : "غير محدد"}
+- تاريخ الميلاد: ${matchedPatient.dateOfBirth ? new Date(matchedPatient.dateOfBirth).toLocaleDateString("ar-EG") : "غير مسجل"}
+- الحالة: ${matchedPatient.status ?? "—"}
+- فصيلة الدم: ${matchedPatient.bloodType ?? "غير مسجلة"}
+- الحساسية: ${matchedPatient.allergies ?? "لا يوجد"}
+- الأمراض المزمنة: ${matchedPatient.chronicDiseases ?? "لا يوجد"}
+- ملاحظات طبية: ${matchedPatient.medicalNotes ?? "لا يوجد"}
+- تاريخ التسجيل: ${matchedPatient.createdAt ? new Date(matchedPatient.createdAt).toLocaleDateString("ar-EG") : "—"}
+
+**الزيارات (${patientVisits.length}):**
+${visitsText}
+
+**الوصفات الطبية (${patientPrescriptions.length}):**
+${rxText}
+
+**العمليات الجراحية (${patientSurgeries.length}):**
+${surgsText}`;
           }
-        }
-
-        // If no patient found, tell the AI
-        if (!patientContext) {
-          patientContext = `\n\n**⚠️ ملاحظة:** تم البحث في قاعدة البيانات ولم يُعثر على مريض بهذا الاسم. أخبر الطبيب بذلك وأطلب منه التأكد من الاسم.`;
         }
       }
 
       // 5. Call LLM
       const result = await invokeLLM({
         messages: [
-          { role: "system", content: systemPrompt + patientContext },
-          ...input.messages.map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
+          { role: "system", content: systemPrompt + extraContext },
+          ...input.messages.map((m) => ({
+            role: m.role as "user" | "assistant",
+            content: m.content,
+          })),
         ],
-        maxTokens: 1200,
+        maxTokens: 1500,
       });
 
       const reply = result.choices[0]?.message?.content;
-      const text = typeof reply === "string" ? reply : Array.isArray(reply) ? reply.map((p: any) => p.text ?? "").join("") : "عذراً، لم أتمكن من الإجابة.";
+      const text =
+        typeof reply === "string"
+          ? reply
+          : Array.isArray(reply)
+          ? reply.map((p: any) => p.text ?? "").join("")
+          : "عذراً، لم أتمكن من الإجابة.";
 
       return { reply: text };
     }),
