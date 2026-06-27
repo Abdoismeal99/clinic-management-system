@@ -138,3 +138,10 @@
 - [x] إعادة فحص التفعيل في ClinicLayout: المستخدمون بدون tenantId (غير مرتبطين بعيادة) يُعاد توجيههم لصفحة NotSubscribed
 - [x] السماح فقط للـ super admin (abdoismeal012@gmail.com) بالدخول بدون tenantId
 - [x] إضافة تبويب "حسابي" في صفحة الإعدادات لتعديل الاسم والتخصص والهاتف
+
+## إرسال دعوة بالإيميل (Resend Integration)
+- [ ] تثبيت مكتبة resend وإضافة RESEND_API_KEY كـ secret
+- [ ] إنشاء server/email.ts لإرسال إيميل التفعيل
+- [ ] إضافة procedure tenants.sendInvitationEmail في tenants router
+- [ ] إضافة زر "إرسال دعوة بالإيميل" في صفحة AdminClients
+- [ ] تصميم قالب إيميل HTML احترافي بالعربي

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { sendActivationEmail } from "../email";
 import { TRPCError } from "@trpc/server";
 import { getDb } from "../db";
 import { tenants, users } from "../../drizzle/schema";
@@ -252,6 +253,41 @@ export const tenantsRouter = router({
       }
 
       return { success: true, clinicName: tenant.clinicName, expiresAt: tenant.expiresAt };
+    }),
+
+  // Send invitation email to a client with their activation link
+  sendInvitationEmail: protectedProcedure
+    .input(z.object({ tenantId: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      assertAdmin(ctx.user?.email);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const result = await db.select().from(tenants)
+        .where(eq(tenants.id, input.tenantId))
+        .limit(1);
+
+      const tenant = result[0];
+      if (!tenant) throw new TRPCError({ code: "NOT_FOUND", message: "العميل غير موجود" });
+      if (!tenant.email) throw new TRPCError({ code: "BAD_REQUEST", message: "لا يوجد إيميل مسجل لهذا العميل" });
+      if (!tenant.activationToken) throw new TRPCError({ code: "BAD_REQUEST", message: "لا يوجد رابط تفعيل — أعد توليد الرابط أولاً" });
+
+      const baseUrl = process.env.VITE_APP_URL ?? "https://clinic-system.org";
+      const activationLink = `${baseUrl}/activate?token=${tenant.activationToken}`;
+
+      const emailResult = await sendActivationEmail({
+        toEmail: tenant.email,
+        toName: undefined,
+        clinicName: tenant.clinicName,
+        activationLink,
+      });
+
+      if (emailResult.error) {
+        console.error("[Email] Failed to send:", emailResult.error);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: `فشل إرسال الإيميل: ${emailResult.error.message}` });
+      }
+
+      return { success: true, emailId: emailResult.data?.id };
     }),
 
   // Check if current user's email has an active subscription
