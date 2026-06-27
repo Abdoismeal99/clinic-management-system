@@ -14,20 +14,29 @@ export default function Activate() {
   const token = getTokenFromUrl();
   const [, navigate] = useLocation();
   const [activated, setActivated] = useState(false);
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const [activatedClinicName, setActivatedClinicName] = useState<string>("");
+  const [activatedExpiresAt, setActivatedExpiresAt] = useState<Date | null>(null);
+  const { isAuthenticated, loading: authLoading, refresh } = useAuth();
+  const utils = trpc.useUtils();
 
   const { data: tenant, isLoading, error } = trpc.tenants.validateToken.useQuery(
     { token: token ?? "" },
     { enabled: !!token, retry: false }
   );
 
-  const activateMutation = trpc.tenants.activate.useMutation({
-    onSuccess: () => {
+  // For already-logged-in users: link them to the tenant directly
+  const linkCurrentUserMutation = trpc.tenants.linkCurrentUser.useMutation({
+    onSuccess: async (data) => {
+      setActivatedClinicName(data.clinicName);
+      setActivatedExpiresAt(data.expiresAt ?? null);
       setActivated(true);
+      // Refresh auth state so the user's tenantId is updated in the session
+      await utils.auth.me.invalidate();
+      await refresh();
     },
   });
 
-  // If user is NOT authenticated, redirect to Google login with the activation URL as returnTo
+  // If user is NOT authenticated, redirect to Google login with the activation URL as state
   // so after login, the OAuth callback will auto-link them to the tenant
   useEffect(() => {
     if (!authLoading && !isAuthenticated && token) {
@@ -36,17 +45,18 @@ export default function Activate() {
     }
   }, [isAuthenticated, authLoading, token]);
 
-  // If user is already authenticated and tenant is already active, go to dashboard
+  // If user is already authenticated, call linkCurrentUser to link them to the tenant
   useEffect(() => {
-    if (!authLoading && isAuthenticated && tenant?.alreadyActive) {
-      navigate("/");
-    }
-  }, [tenant, isAuthenticated, authLoading]);
-
-  // If user is authenticated and tenant is pending, auto-activate
-  useEffect(() => {
-    if (!authLoading && isAuthenticated && tenant && !tenant.alreadyActive && !activated && !activateMutation.isPending) {
-      activateMutation.mutate({ token: token! });
+    if (
+      !authLoading &&
+      isAuthenticated &&
+      tenant &&
+      !activated &&
+      !linkCurrentUserMutation.isPending &&
+      !linkCurrentUserMutation.isSuccess &&
+      !linkCurrentUserMutation.isError
+    ) {
+      linkCurrentUserMutation.mutate({ token: token! });
     }
   }, [tenant, isAuthenticated, authLoading, activated]);
 
@@ -97,9 +107,13 @@ export default function Activate() {
           <div>
             <h1 className="text-2xl font-bold text-foreground mb-2">تم تفعيل الحساب!</h1>
             <p className="text-muted-foreground text-sm">
-              مرحباً بك في نظام {tenant?.clinicName}. اشتراكك سارٍ حتى{" "}
+              مرحباً بك في نظام {activatedClinicName || tenant?.clinicName}. اشتراكك سارٍ حتى{" "}
               <span className="font-medium text-foreground">
-                {tenant?.expiresAt ? new Date(tenant.expiresAt).toLocaleDateString("ar-EG", { year: "numeric", month: "long", day: "numeric" }) : "—"}
+                {activatedExpiresAt
+                  ? new Date(activatedExpiresAt).toLocaleDateString("ar-EG", { year: "numeric", month: "long", day: "numeric" })
+                  : tenant?.expiresAt
+                  ? new Date(tenant.expiresAt).toLocaleDateString("ar-EG", { year: "numeric", month: "long", day: "numeric" })
+                  : "—"}
               </span>
             </p>
           </div>
@@ -146,8 +160,8 @@ export default function Activate() {
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-3" />
           <p className="text-sm text-muted-foreground">جاري تفعيل حسابك تلقائياً...</p>
-          {activateMutation.error && (
-            <p className="text-sm text-destructive mt-2">{activateMutation.error.message}</p>
+          {linkCurrentUserMutation.error && (
+            <p className="text-sm text-destructive mt-2">{linkCurrentUserMutation.error.message}</p>
           )}
         </div>
       </div>

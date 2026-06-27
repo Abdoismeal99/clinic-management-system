@@ -2,7 +2,7 @@ import { z } from "zod";
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { getDb } from "../db";
-import { tenants } from "../../drizzle/schema";
+import { tenants, users } from "../../drizzle/schema";
 import { eq, desc, and, lte } from "drizzle-orm";
 import crypto from "crypto";
 
@@ -216,6 +216,40 @@ export const tenantsRouter = router({
         activatedAt: new Date(),
         // Do NOT delete activationToken - keep it so the link works permanently
       }).where(eq(tenants.id, tenant.id));
+
+      return { success: true, clinicName: tenant.clinicName, expiresAt: tenant.expiresAt };
+    }),
+
+  // Link the currently logged-in user to a tenant using an activation token
+  // This is called when an already-logged-in user opens an activation link
+  linkCurrentUser: protectedProcedure
+    .input(z.object({ token: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const result = await db.select().from(tenants)
+        .where(eq(tenants.activationToken, input.token))
+        .limit(1);
+
+      const tenant = result[0];
+      if (!tenant) throw new TRPCError({ code: "NOT_FOUND", message: "رابط التفعيل غير صحيح" });
+      if (tenant.activationTokenExpiresAt && tenant.activationTokenExpiresAt < new Date() && tenant.status !== "active") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "رابط التفعيل انتهت صلاحيته" });
+      }
+
+      // Update the user's tenantId and tenantRole in the users table
+      await db.update(users)
+        .set({ tenantId: tenant.id, tenantRole: "clinic_admin" })
+        .where(eq(users.id, ctx.user.id));
+
+      // Also mark the tenant as active if it isn't already
+      if (tenant.status !== "active") {
+        await db.update(tenants).set({
+          status: "active",
+          activatedAt: new Date(),
+        }).where(eq(tenants.id, tenant.id));
+      }
 
       return { success: true, clinicName: tenant.clinicName, expiresAt: tenant.expiresAt };
     }),

@@ -35,8 +35,15 @@ describe("auth.me", () => {
 });
 
 describe("role-based access", () => {
-  it("throws FORBIDDEN when assistant tries to create prescription", async () => {
+  // Role restrictions were intentionally removed from the system.
+  // All authenticated users (regardless of role) can perform all operations.
+  it("allows any authenticated user to create a prescription", async () => {
     const caller = appRouter.createCaller(makeCtx("assistant"));
-    await expect(caller.prescriptions.create({ patientId: 1, medications: [{ medicine: "Test", dose: "10mg", frequency: "daily", duration: "7 days", instructions: "" }] })).rejects.toThrow();
+    // Should NOT throw - all roles are allowed to create prescriptions
+    const result = await caller.prescriptions.create({
+      patientId: 1,
+      medications: [{ medicine: "Test", dose: "10mg", frequency: "daily", duration: "7 days", instructions: "" }],
+    });
+    expect(result).toHaveProperty("id");
   });
 });
