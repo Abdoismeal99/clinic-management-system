@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { protectedProcedure, router } from "../_core/trpc";
+import { linkedProcedure as protectedProcedure, router } from "../_core/trpc";
 import { getActivityLogs, getRecentActivities } from "../db";
 
 export const activityRouter = router({

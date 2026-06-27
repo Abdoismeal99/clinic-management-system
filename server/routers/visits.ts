@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { protectedProcedure, router } from "../_core/trpc";
+import { linkedProcedure as protectedProcedure, router } from "../_core/trpc";
 import {
   createVisit, deleteVisit, getFollowUpPatients, getRecentVisits,
   getVisitById, getVisitsByPatient, getVisitsPaginated, logActivity, updateVisit,

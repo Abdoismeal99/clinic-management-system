@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { protectedProcedure, router } from "../_core/trpc";
+import { linkedProcedure as protectedProcedure, router } from "../_core/trpc";
 import { createMedicalFile, deleteFile, getFileById, getFilesByPatient, logActivity, updateFileAnnotations } from "../db";
 import { storageGet, storageGetSignedUrl, storagePut } from "../storage";
 

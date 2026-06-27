@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { protectedProcedure, router } from "../_core/trpc";
+import { protectedProcedure, linkedProcedure, router } from "../_core/trpc";
 import { getAllSettings, upsertSetting, updateUserProfile, getAllUsers, getDoctors, getDiagnoses, createDiagnosis, getTenantId, getUnassignedUsers, getUsersByTenant, linkUserToTenant } from "../db";
 import { getDb } from "../db";
 import { users } from "../../drizzle/schema";
@@ -13,12 +13,12 @@ function isSuperAdmin(email: string | null | undefined): boolean {
 }
 
 export const settingsRouter = router({
-  getAll: protectedProcedure.query(async ({ ctx }) => {
+  getAll: linkedProcedure.query(async ({ ctx }) => {
     const tenantId = await getTenantId(ctx.user.email) ?? 1;
     return getAllSettings(tenantId);
   }),
 
-  upsert: protectedProcedure
+  upsert: linkedProcedure
     .input(z.object({ key: z.string(), value: z.string() }))
     .mutation(async ({ input, ctx }) => {
       const tenantId = await getTenantId(ctx.user.email) ?? 1;
@@ -26,7 +26,7 @@ export const settingsRouter = router({
       return { success: true };
     }),
 
-  upsertMany: protectedProcedure
+  upsertMany: linkedProcedure
     .input(z.array(z.object({ key: z.string(), value: z.string() })))
     .mutation(async ({ input, ctx }) => {
       const tenantId = await getTenantId(ctx.user.email) ?? 1;
@@ -54,7 +54,7 @@ export const usersRouter = router({
 
   doctors: protectedProcedure.query(() => getDoctors()),
 
-  updateProfile: protectedProcedure
+  updateProfile: linkedProcedure
     .input(z.object({
       name: z.string().optional(),
       email: z.string().optional(),

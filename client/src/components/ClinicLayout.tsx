@@ -111,7 +111,15 @@ export default function ClinicLayout({ children }: ClinicLayoutProps) {
     );
   }
 
-  // All authenticated users can access the system — no subscription check
+  // Security check: only super admin and users linked to a tenant can access the system
+  const SYSTEM_ADMIN_EMAIL_CHECK = "abdoismeal012@gmail.com";
+  const isSystemAdminUser = user?.email?.toLowerCase() === SYSTEM_ADMIN_EMAIL_CHECK.toLowerCase();
+  const isLinkedToTenant = !!(user as any)?.tenantId;
+
+  // If user is authenticated but NOT linked to any tenant AND not super admin → show NotSubscribed
+  if (!isSystemAdminUser && !isLinkedToTenant) {
+    return <NotSubscribed />;
+  }
 
   const userInitials = user?.name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) ?? "U";
   const isActive = (href: string) => href === "/" ? location === "/" : location.startsWith(href);

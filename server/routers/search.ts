@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { protectedProcedure, router } from "../_core/trpc";
+import { linkedProcedure as protectedProcedure, router } from "../_core/trpc";
 import { globalSearch, getTenantId } from "../db";
 
 export const searchRouter = router({

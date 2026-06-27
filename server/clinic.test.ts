@@ -4,7 +4,7 @@ import type { TrpcContext } from "./_core/context";
 
 function makeCtx(role: "admin" | "doctor" | "assistant" | "user" = "admin"): TrpcContext {
   return {
-    user: { id: 1, openId: "test-user", email: "test@example.com", name: "Test User", loginMethod: "manus", role, createdAt: new Date(), updatedAt: new Date(), lastSignedIn: new Date() },
+    user: { id: 1, openId: "test-user", email: "test@example.com", name: "Test User", loginMethod: "manus", role, tenantId: 1, tenantRole: "clinic_admin", specialty: null, phone: null, avatarUrl: null, isActive: true, createdAt: new Date(), updatedAt: new Date(), lastSignedIn: new Date() },
     req: { protocol: "https", headers: {} } as any,
     res: { clearCookie: () => {} } as any,
   };

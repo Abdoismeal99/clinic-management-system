@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { protectedProcedure, router } from "../_core/trpc";
+import { linkedProcedure as protectedProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { getDb, getTenantId } from "../db";
 import { surgeries, surgeryTypes, clinicDoctors, patients } from "../../drizzle/schema";

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { protectedProcedure, router } from "../_core/trpc";
+import { linkedProcedure as protectedProcedure, router } from "../_core/trpc";
 import {
   getDoctorStats, getMonthlyPatientStats, getMonthlyVisitStats,
   getPatientStatusStats, getTopDiagnoses, getAllUsers, getTenantId,

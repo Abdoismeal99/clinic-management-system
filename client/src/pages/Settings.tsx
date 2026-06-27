@@ -56,6 +56,28 @@ export default function Settings() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoUploading, setLogoUploading] = useState(false);
 
+  // Profile editing state
+  const [profile, setProfile] = useState({ name: user?.name ?? "", specialty: (user as any)?.specialty ?? "", phone: (user as any)?.phone ?? "" });
+  const [profileSaving, setProfileSaving] = useState(false);
+  const updateProfileMutation = trpc.users.updateProfile.useMutation({
+    onSuccess: async () => {
+      toast.success("تم حفظ بيانات حسابك");
+      setProfileSaving(false);
+    },
+    onError: (e) => { toast.error(e.message); setProfileSaving(false); },
+  });
+
+  // Sync profile state when user loads
+  useEffect(() => {
+    if (user) {
+      setProfile({
+        name: user.name ?? "",
+        specialty: (user as any).specialty ?? "",
+        phone: (user as any).phone ?? "",
+      });
+    }
+  }, [user?.id]);
+
   // Any logged-in user with a tenant (clinic) can edit their own clinic settings
   const SUPER_ADMIN_EMAIL = "abdoismeal012@gmail.com";
   const isAdmin = user?.role === "admin" || (user as any)?.tenantRole === "clinic_admin" || (user as any)?.tenantId != null || user?.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
@@ -142,14 +164,56 @@ export default function Settings() {
         </div>
       )}
 
-      <Tabs defaultValue="clinic">
+      <Tabs defaultValue="profile">
         <TabsList className="h-9 flex-wrap gap-1">
+          <TabsTrigger value="profile" className="text-sm gap-1.5"><User className="w-3.5 h-3.5" /> حسابي</TabsTrigger>
           <TabsTrigger value="clinic" className="text-sm gap-1.5"><Building2 className="w-3.5 h-3.5" /> العيادة</TabsTrigger>
-          <TabsTrigger value="doctor" className="text-sm gap-1.5"><User className="w-3.5 h-3.5" /> الطبيب الرئيسي</TabsTrigger>
+          <TabsTrigger value="doctor" className="text-sm gap-1.5"><Stethoscope className="w-3.5 h-3.5" /> الطبيب الرئيسي</TabsTrigger>
           <TabsTrigger value="doctors" className="text-sm gap-1.5"><Users className="w-3.5 h-3.5" /> الأطباء</TabsTrigger>
           <TabsTrigger value="surgeryTypes" className="text-sm gap-1.5"><Stethoscope className="w-3.5 h-3.5" /> أنواع العمليات</TabsTrigger>
           <TabsTrigger value="preferences" className="text-sm gap-1.5"><Globe className="w-3.5 h-3.5" /> التفضيلات</TabsTrigger>
         </TabsList>
+
+        {/* My Profile */}
+        <TabsContent value="profile" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2"><User className="w-4 h-4 text-primary" /> بيانات حسابي</CardTitle>
+              <CardDescription>تعديل اسمك وتخصصك ورقم هاتفك الشخصي</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2 space-y-1.5">
+                  <Label>الاسم الكامل</Label>
+                  <Input value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} placeholder="اسمك الكامل" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>التخصص</Label>
+                  <Input value={profile.specialty} onChange={(e) => setProfile({ ...profile, specialty: e.target.value })} placeholder="مثال: طب عام، أسنان، عيون..." />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>رقم الهاتف</Label>
+                  <Input value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} placeholder="+966 5X XXX XXXX" />
+                </div>
+                <div className="sm:col-span-2 space-y-1.5">
+                  <Label className="text-muted-foreground">البريد الإلكتروني</Label>
+                  <Input value={user?.email ?? ""} disabled className="bg-muted/40" />
+                  <p className="text-xs text-muted-foreground">البريد الإلكتروني لا يمكن تغييره — مرتبط بحساب جوجل</p>
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  onClick={() => { setProfileSaving(true); updateProfileMutation.mutate({ name: profile.name, specialty: profile.specialty, phone: profile.phone }); }}
+                  disabled={profileSaving || updateProfileMutation.isPending}
+                  className="gap-2"
+                >
+                  <Save className="w-4 h-4" />
+                  {profileSaving || updateProfileMutation.isPending ? "جاري الحفظ..." : "حفظ بياناتي"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* Clinic Settings */}
         <TabsContent value="clinic" className="mt-4">

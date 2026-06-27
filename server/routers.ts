@@ -1,7 +1,7 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { publicProcedure, linkedProcedure, router } from "./_core/trpc";
 import { patientsRouter } from "./routers/patients";
 import { visitsRouter } from "./routers/visits";
 import { prescriptionsRouter } from "./routers/prescriptions";
@@ -34,7 +34,7 @@ export const appRouter = router({
   }),
 
   dashboard: router({
-    stats: publicProcedure.query(async ({ ctx }) => {
+    stats: linkedProcedure.query(async ({ ctx }) => {
       const tenantId = ctx.user?.email ? await getTenantId(ctx.user.email) : undefined;
       const [patientCount, todayAppts, recentPatients, recentVisits, followUps, monthlyPatients, monthlyVisits, activities] =
         await Promise.all([
