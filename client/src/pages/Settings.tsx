@@ -49,6 +49,10 @@ export default function Settings() {
     onSuccess: () => { toast.success("تم تحديث الشعار"); utils.settings.getAll.invalidate(); },
     onError: (e) => toast.error(e.message),
   });
+  const uploadLogoMutation = trpc.settings.uploadLogo.useMutation({
+    onSuccess: (data) => { setLogoPreview(data.url); toast.success("تم رفع الشعار بنجاح"); utils.settings.getAll.invalidate(); setLogoUploading(false); },
+    onError: (e) => { toast.error(e.message); setLogoUploading(false); },
+  });
 
   const [clinic, setClinic] = useState({ name: "", address: "", phone: "", email: "" });
   const [doctor, setDoctor] = useState({ name: "", specialty: "", phone: "", email: "" });
@@ -132,9 +136,11 @@ export default function Settings() {
       const reader = new FileReader();
       reader.onload = async (ev) => {
         const dataUrl = ev.target?.result as string;
+        // Show preview immediately while uploading
         setLogoPreview(dataUrl);
-        await upsertMutation.mutateAsync({ key: SETTING_KEYS.clinicLogo, value: dataUrl });
-        setLogoUploading(false);
+        // Extract base64 content (remove data:image/...;base64, prefix)
+        const base64 = dataUrl.split(",")[1];
+        uploadLogoMutation.mutate({ fileContent: base64, mimeType: file.type, fileName: file.name });
       };
       reader.readAsDataURL(file);
     } catch {

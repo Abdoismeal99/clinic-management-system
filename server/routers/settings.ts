@@ -5,6 +5,7 @@ import { getAllSettings, upsertSetting, updateUserProfile, getAllUsers, getDocto
 import { getDb } from "../db";
 import { users } from "../../drizzle/schema";
 import { eq, isNull } from "drizzle-orm";
+import { storagePut } from "../storage";
 
 const SUPER_ADMIN_EMAIL = "abdoismeal012@gmail.com";
 
@@ -32,6 +33,23 @@ export const settingsRouter = router({
       const tenantId = await getTenantId(ctx.user.email) ?? 1;
       await Promise.all(input.map((s) => upsertSetting(s.key, s.value, tenantId)));
       return { success: true };
+    }),
+
+  // Upload clinic logo to S3 and store the URL in settings
+  uploadLogo: linkedProcedure
+    .input(z.object({
+      fileContent: z.string(), // base64 encoded image
+      mimeType: z.string(),
+      fileName: z.string(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const tenantId = await getTenantId(ctx.user.email) ?? 1;
+      const ext = input.fileName.split(".").pop() ?? "png";
+      const fileKey = `clinic-logos/tenant-${tenantId}-${Date.now()}.${ext}`;
+      const buffer = Buffer.from(input.fileContent, "base64");
+      const { url } = await storagePut(fileKey, buffer, input.mimeType);
+      await upsertSetting("clinic_logo", url, tenantId);
+      return { url };
     }),
 });
 

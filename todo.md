@@ -140,8 +140,15 @@
 - [x] إضافة تبويب "حسابي" في صفحة الإعدادات لتعديل الاسم والتخصص والهاتف
 
 ## إرسال دعوة بالإيميل (Resend Integration)
-- [ ] تثبيت مكتبة resend وإضافة RESEND_API_KEY كـ secret
-- [ ] إنشاء server/email.ts لإرسال إيميل التفعيل
-- [ ] إضافة procedure tenants.sendInvitationEmail في tenants router
-- [ ] إضافة زر "إرسال دعوة بالإيميل" في صفحة AdminClients
-- [ ] تصميم قالب إيميل HTML احترافي بالعربي
+- [x] تثبيت مكتبة resend وإضافة RESEND_API_KEY كـ secret
+- [x] إنشاء server/email.ts لإرسال إيميل التفعيل
+- [x] إضافة procedure tenants.sendInvitationEmail في tenants router
+- [x] إضافة زر "إرسال دعوة بالإيميل" في صفحة AdminClients
+- [x] تصميم قالب إيميل HTML احترافي بالعربي
+
+## هوية العيادة في الـ PDF
+- [x] إضافة جدول clinic_branding في schema (logoUrl, clinicName, address, phone, email, tenantId) — تم استخدام جدول settings الموجود
+- [x] إضافة S3 storage helpers لرفع اللوجو — تم استخدام الـ settings المحلية
+- [x] إضافة procedures: getBranding و saveBranding في settings router — موجودة مسبقاً
+- [x] إضافة تبويب "هوية العيادة" في صفحة الإعدادات مع رفع اللوجو والبيانات — موجود في تبويب العيادة
+- [x] تحديث PDF الروشتة ليستخدم بيانات العيادة في الهيدر

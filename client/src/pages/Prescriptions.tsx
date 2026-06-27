@@ -53,6 +53,8 @@ export default function Prescriptions() {
     { id: printRxId! },
     { enabled: !!printRxId }
   );
+  const { data: settingsData } = trpc.settings.getAll.useQuery();
+  const getSetting = (key: string) => settingsData?.find((s: any) => s.key === key)?.value ?? "";
   const { data: templates, isLoading: loadingTemplates } = trpc.prescriptions.templates.useQuery();
 
   const createMutation = trpc.prescriptions.create.useMutation({
@@ -388,37 +390,96 @@ export default function Prescriptions() {
 
       {/* Print Prescription Dialog */}
       <Dialog open={!!printRxId} onOpenChange={(v) => !v && setPrintRxId(null)}>
-        <DialogContent aria-describedby={undefined} className="max-w-lg">
-          <DialogHeader><DialogTitle>Prescription</DialogTitle></DialogHeader>
-          {printRx && (
-            <div ref={printRef} className="space-y-4 py-2">
-              <div className="border-b pb-3">
-                <p className="font-bold text-lg">Medical Prescription</p>
-                <p className="text-sm text-muted-foreground">Date: {format(new Date(printRx.createdAt), "MMMM d, yyyy")}</p>
-                <p className="text-sm text-muted-foreground">Patient ID: #{printRx.patientId}</p>
-              </div>
-              <div className="space-y-3">
-                {Array.isArray(printRx.medications) && printRx.medications.map((med: any, i: number) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <span className="font-bold text-primary text-lg leading-none mt-0.5">℞</span>
-                    <div>
-                      <p className="font-semibold">{med.medicine}</p>
-                      <p className="text-sm text-muted-foreground">{med.dose} — {med.frequency} — {med.duration}</p>
-                      {med.instructions && <p className="text-xs text-muted-foreground italic">{med.instructions}</p>}
+        <DialogContent aria-describedby={undefined} className="max-w-xl">
+          <DialogHeader><DialogTitle>طباعة الوصفة الطبية</DialogTitle></DialogHeader>
+          {printRx && (() => {
+            const clinicName = getSetting("clinic_name");
+            const clinicAddress = getSetting("clinic_address");
+            const clinicPhone = getSetting("clinic_phone");
+            const clinicEmail = getSetting("clinic_email");
+            const clinicLogo = getSetting("clinic_logo");
+            const doctorName = getSetting("doctor_name");
+            const doctorSpecialty = getSetting("doctor_specialty");
+            return (
+              <div ref={printRef} className="space-y-4 py-2" dir="rtl">
+                {/* Clinic Header */}
+                <div className="border-b-2 border-primary pb-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      {clinicName && <h2 className="text-xl font-bold text-foreground">{clinicName}</h2>}
+                      {doctorSpecialty && <p className="text-sm text-primary font-medium">{doctorSpecialty}</p>}
+                      {doctorName && <p className="text-sm text-muted-foreground">{doctorName}</p>}
+                      <div className="mt-2 space-y-0.5">
+                        {clinicAddress && <p className="text-xs text-muted-foreground">📍 {clinicAddress}</p>}
+                        {clinicPhone && <p className="text-xs text-muted-foreground">📞 {clinicPhone}</p>}
+                        {clinicEmail && <p className="text-xs text-muted-foreground">✉️ {clinicEmail}</p>}
+                      </div>
                     </div>
+                    {clinicLogo && (
+                      <img src={clinicLogo} alt="شعار العيادة" className="w-20 h-20 object-contain rounded-lg border border-border flex-shrink-0" />
+                    )}
+                    {!clinicLogo && (
+                      <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <span className="text-2xl">🏥</span>
+                      </div>
+                    )}
                   </div>
-                ))}
+                </div>
+
+                {/* Prescription Title + Date */}
+                <div className="flex items-center justify-between">
+                  <p className="font-bold text-base text-foreground">وصفة طبية</p>
+                  <div className="text-xs text-muted-foreground space-y-0.5 text-left">
+                    <p>التاريخ: {format(new Date(printRx.createdAt), "dd/MM/yyyy")}</p>
+                    <p>رقم الوصفة: #{printRx.id}</p>
+                  </div>
+                </div>
+
+                {/* Patient Info */}
+                <div className="bg-muted/30 rounded-lg px-3 py-2">
+                  <p className="text-xs text-muted-foreground">رقم المريض: <span className="font-medium text-foreground">#{printRx.patientId}</span></p>
+                  {printRx.treatmentName && <p className="text-xs text-muted-foreground mt-0.5">التشخيص: <span className="font-medium text-foreground">{printRx.treatmentName}</span></p>}
+                </div>
+
+                {/* Medications */}
+                <div className="space-y-3">
+                  {Array.isArray(printRx.medications) && printRx.medications.map((med: any, i: number) => (
+                    <div key={i} className="flex items-start gap-3 border-b border-border/50 pb-2 last:border-0">
+                      <span className="font-bold text-primary text-xl leading-none mt-0.5">℞</span>
+                      <div className="flex-1">
+                        <p className="font-semibold text-foreground">{med.medicine}</p>
+                        <p className="text-sm text-muted-foreground">{med.dose} — {med.frequency} — {med.duration}</p>
+                        {med.instructions && <p className="text-xs text-muted-foreground italic mt-0.5">{med.instructions}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Notes */}
+                {printRx.notes && (
+                  <div className="border-t pt-3">
+                    <p className="text-sm"><span className="font-medium">ملاحظات:</span> {printRx.notes}</p>
+                  </div>
+                )}
+
+                {/* Footer / Signature */}
+                <div className="border-t pt-4 flex justify-between items-end">
+                  <div className="text-xs text-muted-foreground">
+                    <p>توقيع الطبيب</p>
+                    <div className="mt-6 border-b border-foreground/40 w-32" />
+                    {doctorName && <p className="mt-1">{doctorName}</p>}
+                  </div>
+                  <div className="text-xs text-muted-foreground text-left">
+                    <p>ختم العيادة</p>
+                    <div className="mt-6 border border-dashed border-foreground/30 w-20 h-10 rounded" />
+                  </div>
+                </div>
               </div>
-              {printRx.notes && <div className="border-t pt-3"><p className="text-sm"><span className="font-medium">Notes:</span> {printRx.notes}</p></div>}
-              <div className="border-t pt-3 flex justify-between text-xs text-muted-foreground">
-                <span>Prescription #{printRx.id}</span>
-                <span>Doctor's Signature: _______________</span>
-              </div>
-            </div>
-          )}
+            );
+          })()}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPrintRxId(null)}>Close</Button>
-            <Button className="gap-2" onClick={handlePrint}><Printer className="w-4 h-4" /> Print</Button>
+            <Button variant="outline" onClick={() => setPrintRxId(null)}>إغلاق</Button>
+            <Button className="gap-2" onClick={handlePrint}><Printer className="w-4 h-4" /> طباعة</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
