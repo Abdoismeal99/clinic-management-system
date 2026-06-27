@@ -2,8 +2,11 @@ import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import type { Express, Request, Response } from "express";
 import axios from "axios";
 import * as db from "../db";
+import { getDb } from "../db";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
+import { tenants, users } from "../../drizzle/schema";
+import { eq } from "drizzle-orm";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID ?? "";
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET ?? "";
@@ -97,16 +100,49 @@ export function registerGoogleOAuthRoutes(app: Express) {
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
       // Redirect back to returnTo if provided via state
+      // Also auto-link user to tenant if returnTo contains an activation token
       let redirectTo = "/";
+      let activationToken: string | null = null;
       try {
         const stateParam = typeof req.query.state === "string" ? req.query.state : null;
         if (stateParam) {
           const stateObj = JSON.parse(Buffer.from(stateParam, "base64").toString());
           if (stateObj.returnTo && typeof stateObj.returnTo === "string" && stateObj.returnTo.startsWith("/")) {
             redirectTo = stateObj.returnTo;
+            // Extract activation token from returnTo URL
+            const returnToUrl = new URL(stateObj.returnTo, "http://localhost");
+            activationToken = returnToUrl.searchParams.get("token");
           }
         }
       } catch {}
+
+      // If we have an activation token, auto-link this user to the tenant as clinic_admin
+      if (activationToken) {
+        try {
+          const database = await getDb();
+          if (database) {
+            const tenantResult = await database.select().from(tenants)
+              .where(eq(tenants.activationToken, activationToken))
+              .limit(1);
+            const tenant = tenantResult[0];
+            if (tenant) {
+              // Activate the tenant if pending
+              if (tenant.status === "pending") {
+                await database.update(tenants).set({ status: "active", activatedAt: new Date() })
+                  .where(eq(tenants.id, tenant.id));
+              }
+              // Link user to tenant as clinic_admin (regardless of email)
+              await database.update(users).set({ tenantId: tenant.id, tenantRole: "clinic_admin" })
+                .where(eq(users.openId, openId));
+              console.log(`[Google OAuth] Linked user ${email} to tenant ${tenant.clinicName} as clinic_admin`);
+              // Redirect to dashboard after successful activation
+              redirectTo = "/";
+            }
+          }
+        } catch (linkErr: any) {
+          console.error("[Google OAuth] Failed to link user to tenant:", linkErr?.message);
+        }
+      }
 
       res.redirect(302, redirectTo);
     } catch (err: any) {

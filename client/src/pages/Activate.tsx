@@ -22,22 +22,33 @@ export default function Activate() {
   );
 
   const activateMutation = trpc.tenants.activate.useMutation({
-    onSuccess: () => setActivated(true),
+    onSuccess: () => {
+      setActivated(true);
+    },
   });
 
-  // If already active and user is logged in, go straight to dashboard
+  // If user is NOT authenticated, redirect to Google login with the activation URL as returnTo
+  // so after login, the OAuth callback will auto-link them to the tenant
   useEffect(() => {
-    if (tenant?.alreadyActive && isAuthenticated && !authLoading) {
+    if (!authLoading && !isAuthenticated && token) {
+      const returnTo = window.location.pathname + window.location.search;
+      window.location.href = `/api/auth/google?returnTo=${encodeURIComponent(returnTo)}`;
+    }
+  }, [isAuthenticated, authLoading, token]);
+
+  // If user is already authenticated and tenant is already active, go to dashboard
+  useEffect(() => {
+    if (!authLoading && isAuthenticated && tenant?.alreadyActive) {
       navigate("/");
     }
   }, [tenant, isAuthenticated, authLoading]);
 
-  // If already active but not logged in, redirect to Google login with return URL
+  // If user is authenticated and tenant is pending, auto-activate
   useEffect(() => {
-    if (tenant?.alreadyActive && !isAuthenticated && !authLoading) {
-      window.location.href = `/api/auth/google?returnTo=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+    if (!authLoading && isAuthenticated && tenant && !tenant.alreadyActive && !activated && !activateMutation.isPending) {
+      activateMutation.mutate({ token: token! });
     }
-  }, [tenant, isAuthenticated, authLoading]);
+  }, [tenant, isAuthenticated, authLoading, activated]);
 
   if (!token) {
     return (
@@ -51,12 +62,13 @@ export default function Activate() {
     );
   }
 
-  if (isLoading) {
+  // Loading state while checking auth or token
+  if (authLoading || isLoading || (!isAuthenticated && token)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center" dir="rtl">
         <div className="text-center space-y-3">
           <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto" />
-          <p className="text-muted-foreground">جاري التحقق من الرابط...</p>
+          <p className="text-muted-foreground">جاري التحقق...</p>
         </div>
       </div>
     );
@@ -99,10 +111,10 @@ export default function Activate() {
     );
   }
 
+  // Activating in progress
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4" dir="rtl">
       <div className="bg-card border border-border rounded-2xl p-8 max-w-md w-full space-y-6 shadow-lg">
-        {/* Logo */}
         <div className="text-center">
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
             <Stethoscope className="w-8 h-8 text-primary" />
@@ -111,16 +123,11 @@ export default function Activate() {
           <p className="text-muted-foreground text-sm mt-1">نظام إدارة العيادة</p>
         </div>
 
-        {/* Tenant Info */}
         {tenant && (
           <div className="bg-muted/40 rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">اسم العيادة</span>
               <span className="font-medium text-foreground">{tenant.clinicName}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">الإيميل</span>
-              <span className="font-medium text-foreground">{tenant.email}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">نوع الاشتراك</span>
@@ -136,24 +143,11 @@ export default function Activate() {
           </div>
         )}
 
-        <div className="space-y-3">
-          <p className="text-sm text-muted-foreground text-center">
-            اضغط على الزر أدناه لتفعيل حسابك والبدء في استخدام النظام.
-          </p>
-          <Button
-            className="w-full"
-            size="lg"
-            onClick={() => activateMutation.mutate({ token: token! })}
-            disabled={activateMutation.isPending}
-          >
-            {activateMutation.isPending ? (
-              <><Loader2 className="w-4 h-4 animate-spin ml-2" /> جاري التفعيل...</>
-            ) : (
-              <><CheckCircle className="w-4 h-4 ml-2" /> تفعيل الحساب الآن</>
-            )}
-          </Button>
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">جاري تفعيل حسابك تلقائياً...</p>
           {activateMutation.error && (
-            <p className="text-sm text-destructive text-center">{activateMutation.error.message}</p>
+            <p className="text-sm text-destructive mt-2">{activateMutation.error.message}</p>
           )}
         </div>
       </div>
