@@ -36,8 +36,11 @@ const NAV_ITEMS = [
 
 const ADMIN_NAV_ITEMS = [
   { label: "المستخدمون", icon: ClipboardList, href: "/users" },
-  { label: "إدارة العملاء", icon: Users, href: "/admin/clients" },
   { label: "الإعدادات", icon: Settings, href: "/settings" },
+];
+
+const SUPER_ADMIN_ONLY_ITEMS = [
+  { label: "إدارة العملاء", icon: Users, href: "/admin/clients" },
 ];
 
 interface ClinicLayoutProps {
@@ -180,7 +183,7 @@ export default function ClinicLayout({ children }: ClinicLayoutProps) {
               {!collapsed && <p className="text-xs font-semibold text-sidebar-foreground/40 uppercase tracking-wider">الإدارة</p>}
               {collapsed && <div className="border-t border-sidebar-border" />}
             </div>
-            {ADMIN_NAV_ITEMS.map((item) => {
+            {[...ADMIN_NAV_ITEMS, ...(isSystemAdmin ? SUPER_ADMIN_ONLY_ITEMS : [])].map((item) => {
               const Icon = item.icon;
               const active = isActive(item.href);
               if (collapsed) {

@@ -25,6 +25,15 @@ import Surgeries from "./pages/Surgeries";
 import AIAssistant from "./pages/AIAssistant";
 import AdminClients from "./pages/AdminClients";
 import Activate from "./pages/Activate";
+import { useAuth } from "./_core/hooks/useAuth";
+
+const SUPER_ADMIN_EMAIL = "abdoismeal012@gmail.com";
+function SuperAdminGuard({ component: Component }: { component: React.ComponentType }) {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (user?.email?.toLowerCase() !== SUPER_ADMIN_EMAIL.toLowerCase()) return <NotFound />;
+  return <Component />;
+}
 
 function Router() {
   return (
@@ -46,7 +55,7 @@ function Router() {
         <Route path="/users" component={Users} />
         <Route path="/surgeries" component={Surgeries} />
         <Route path="/ai-assistant" component={AIAssistant} />
-        <Route path="/admin/clients" component={AdminClients} />
+        <Route path="/admin/clients" component={() => <SuperAdminGuard component={AdminClients} />} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>
