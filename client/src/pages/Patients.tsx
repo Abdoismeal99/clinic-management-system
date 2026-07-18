@@ -16,12 +16,18 @@ import { Users, Plus, Search, Eye, Pencil, Trash2, Archive, ChevronLeft, Chevron
 import { format, differenceInYears } from "date-fns";
 import { STATUS_CLASSES, BLOOD_TYPES, canManagePatients, canDelete } from "@/lib/types";
 import TagInput from "@/components/TagInput";
+import { useT } from "@/contexts/SettingsContext";
 
-const STATUS_LABELS_AR: Record<string, string> = {
-  new: "جديد", "follow-up": "متابعة", stable: "مستقر", critical: "حرج",
+const STATUS_LABELS_AR: Record<string, { ar: string; en: string }> = {
+  new: { ar: "جديد", en: "New" },
+  "follow-up": { ar: "متابعة", en: "Follow-up" },
+  stable: { ar: "مستقر", en: "Stable" },
+  critical: { ar: "حرج", en: "Critical" },
 };
-const GENDER_LABELS_AR: Record<string, string> = {
-  male: "ذكر", female: "أنثى", other: "آخر",
+const GENDER_LABELS_AR: Record<string, { ar: string; en: string }> = {
+  male: { ar: "ذكر", en: "Male" },
+  female: { ar: "أنثى", en: "Female" },
+  other: { ar: "آخر", en: "Other" },
 };
 const EMPTY_FORM = {
   fullName: "", gender: "male" as const, dateOfBirth: "", phone: "",
@@ -34,6 +40,7 @@ const EMPTY_FORM = {
 
 export default function Patients() {
   const { user } = useAuth();
+  const { t, lang } = useT();
   const utils = trpc.useUtils();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -92,17 +99,17 @@ export default function Patients() {
   const allTags = Array.from(new Set((data?.data ?? []).flatMap(p => parseTags(p.tags))));
 
   return (
-    <div className="p-6 space-y-5 max-w-7xl mx-auto" dir="rtl">
+    <div className="p-6 space-y-5 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">المرضى</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{data?.total ?? 0} مريض إجمالاً</p>
+          <h1 className="text-2xl font-bold text-foreground">{t("patients", "title")}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{data?.total ?? 0} {t("patients", "totalPatients")}</p>
         </div>
         <div className="flex items-center gap-2">
           <Link href="/patients/archive">
-            <Button variant="outline" size="sm" className="gap-2 h-9"><Archive className="w-4 h-4" /> الأرشيف</Button>
+            <Button variant="outline" size="sm" className="gap-2 h-9"><Archive className="w-4 h-4" /> {t("patients", "archive")}</Button>
           </Link>
-          <Button onClick={openCreate} size="sm" className="gap-2 h-9"><Plus className="w-4 h-4" /> مريض جديد</Button>
+          <Button onClick={openCreate} size="sm" className="gap-2 h-9"><Plus className="w-4 h-4" /> {t("patients", "newPatient")}</Button>
         </div>
       </div>
 
@@ -111,24 +118,24 @@ export default function Patients() {
           <div className="flex flex-wrap gap-3">
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input placeholder="بحث بالاسم، رقم المريض، الهاتف..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} className="pr-9" />
+              <Input placeholder={t("patients", "searchPlaceholder")} value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} className="pr-9" />
             </div>
             <Select value={statusFilter} onValueChange={v => { setStatusFilter(v); setPage(1); }}>
-              <SelectTrigger className="w-36"><SelectValue placeholder="الحالة" /></SelectTrigger>
+              <SelectTrigger className="w-36"><SelectValue placeholder={t("patients", "status")} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">كل الحالات</SelectItem>
-                <SelectItem value="new">جديد</SelectItem>
-                <SelectItem value="follow-up">متابعة</SelectItem>
-                <SelectItem value="stable">مستقر</SelectItem>
-                <SelectItem value="critical">حرج</SelectItem>
+                <SelectItem value="all">{t("patients", "allStatuses")}</SelectItem>
+                <SelectItem value="new">{t("patients", "statusNew")}</SelectItem>
+                <SelectItem value="follow-up">{t("patients", "statusFollowUp")}</SelectItem>
+                <SelectItem value="stable">{t("patients", "statusStable")}</SelectItem>
+                <SelectItem value="critical">{t("patients", "statusCritical")}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={genderFilter} onValueChange={v => { setGenderFilter(v); setPage(1); }}>
-              <SelectTrigger className="w-32"><SelectValue placeholder="الجنس" /></SelectTrigger>
+              <SelectTrigger className="w-32"><SelectValue placeholder={t("patients", "gender")} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">الكل</SelectItem>
-                <SelectItem value="male">ذكر</SelectItem>
-                <SelectItem value="female">أنثى</SelectItem>
+                <SelectItem value="all">{t("common", "all")}</SelectItem>
+                <SelectItem value="male">{t("patients", "male")}</SelectItem>
+                <SelectItem value="female">{t("patients", "female")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -166,13 +173,13 @@ export default function Patients() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-muted/40 text-muted-foreground text-xs">
-                    <th className="text-right px-4 py-3 font-medium">المريض</th>
-                    <th className="text-right px-4 py-3 font-medium hidden sm:table-cell">رقم المريض</th>
-                    <th className="text-right px-4 py-3 font-medium hidden md:table-cell">الجنس / العمر</th>
-                    <th className="text-right px-4 py-3 font-medium hidden lg:table-cell">الهاتف</th>
-                    <th className="text-right px-4 py-3 font-medium">التاجات</th>
-                    <th className="text-right px-4 py-3 font-medium">الحالة</th>
-                    <th className="text-right px-4 py-3 font-medium">إجراءات</th>
+                    <th className="text-right px-4 py-3 font-medium">{t("patients", "patient")}</th>
+                    <th className="text-right px-4 py-3 font-medium hidden sm:table-cell">{t("patients", "patientId")}</th>
+                    <th className="text-right px-4 py-3 font-medium hidden md:table-cell">{t("patients", "genderAge")}</th>
+                    <th className="text-right px-4 py-3 font-medium hidden lg:table-cell">{t("patients", "phone")}</th>
+                    <th className="text-right px-4 py-3 font-medium">{t("patients", "tags")}</th>
+                    <th className="text-right px-4 py-3 font-medium">{t("patients", "status")}</th>
+                    <th className="text-right px-4 py-3 font-medium">{t("common", "actions")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -191,7 +198,7 @@ export default function Patients() {
                         </td>
                         <td className="px-4 py-3 hidden sm:table-cell text-muted-foreground font-mono text-xs">{p.patientId}</td>
                         <td className="px-4 py-3 hidden md:table-cell text-muted-foreground">
-                          {GENDER_LABELS_AR[p.gender] ?? p.gender}{age !== null ? ` · ${age} سنة` : ""}
+                          {(GENDER_LABELS_AR[p.gender] as any)?.[lang] ?? p.gender}{age !== null ? ` · ${age} ${t("patients", "years")}` : ""}
                         </td>
                         <td className="px-4 py-3 hidden lg:table-cell text-muted-foreground">{p.phone ?? "—"}</td>
                         <td className="px-4 py-3">
@@ -206,7 +213,7 @@ export default function Patients() {
                         </td>
                         <td className="px-4 py-3">
                           <Badge className={`text-xs ${STATUS_CLASSES[p.status as keyof typeof STATUS_CLASSES] ?? ""}`}>
-                            {STATUS_LABELS_AR[p.status] ?? p.status}
+                            {(STATUS_LABELS_AR[p.status] as any)?.[lang] ?? p.status}
                           </Badge>
                         </td>
                         <td className="px-4 py-3">
@@ -227,13 +234,13 @@ export default function Patients() {
           )}
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t">
-              <span className="text-xs text-muted-foreground">صفحة {page} من {totalPages}</span>
+              <span className="text-xs text-muted-foreground">{t("common", "page")} {page} {t("common", "of")} {totalPages}</span>
               <div className="flex gap-1">
                 <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="h-8 gap-1">
-                  <ChevronRight className="w-3 h-3" /> السابق
+                  <ChevronRight className="w-3 h-3" /> {t("common", "prev")}
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="h-8 gap-1">
-                  التالي <ChevronLeft className="w-3 h-3" />
+                  {t("common", "next")} <ChevronLeft className="w-3 h-3" />
                 </Button>
               </div>
             </div>
@@ -243,76 +250,66 @@ export default function Patients() {
 
       <Dialog open={showForm} onOpenChange={v => { setShowForm(v); if (!v) setEditId(null); }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
-          <DialogHeader><DialogTitle>{editId ? "تعديل بيانات المريض" : "إضافة مريض جديد"}</DialogTitle></DialogHeader>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2" dir="rtl">
-            {/* الاسم — ضروري */}
+          <DialogHeader><DialogTitle>{editId ? t("patients", "editPatient") : t("patients", "addPatient")}</DialogTitle></DialogHeader>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
             <div className="sm:col-span-2 space-y-1.5">
-              <Label>الاسم الكامل <span className="text-destructive">*</span></Label>
-              <Input value={form.fullName} onChange={e => setForm({ ...form, fullName: e.target.value })} placeholder="أدخل الاسم الكامل" />
+              <Label>{t("patients", "fullName")} <span className="text-destructive">*</span></Label>
+              <Input value={form.fullName} onChange={e => setForm({ ...form, fullName: e.target.value })} placeholder={t("patients", "fullNamePlaceholder")} />
             </div>
-            {/* رقم الهاتف */}
             <div className="space-y-1.5">
-              <Label>رقم الهاتف</Label>
-              <Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="مثال: 0501234567" />
+              <Label>{t("patients", "phone")}</Label>
+              <Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="0501234567" />
             </div>
-            {/* الجنس — ذكر / أنثى فقط */}
             <div className="space-y-1.5">
-              <Label>الجنس</Label>
+              <Label>{t("patients", "gender")}</Label>
               <Select value={form.gender} onValueChange={v => setForm({ ...form, gender: v as any })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="male">ذكر</SelectItem>
-                  <SelectItem value="female">أنثى</SelectItem>
+                  <SelectItem value="male">{t("patients", "male")}</SelectItem>
+                  <SelectItem value="female">{t("patients", "female")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            {/* فصيلة الدم */}
             <div className="space-y-1.5">
-              <Label>فصيلة الدم</Label>
+              <Label>{t("patients", "bloodType")}</Label>
               <Select value={form.bloodType} onValueChange={v => setForm({ ...form, bloodType: v as any })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{BLOOD_TYPES.map(bt => <SelectItem key={bt} value={bt}>{bt === "unknown" ? "غير معروف" : bt}</SelectItem>)}</SelectContent>
+                <SelectContent>{BLOOD_TYPES.map(bt => <SelectItem key={bt} value={bt}>{bt === "unknown" ? t("patients", "unknown") : bt}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            {/* تاريخ الميلاد */}
             <div className="space-y-1.5">
-              <Label>تاريخ الميلاد</Label>
+              <Label>{t("patients", "dateOfBirth")}</Label>
               <Input type="date" value={form.dateOfBirth} onChange={e => setForm({ ...form, dateOfBirth: e.target.value })} />
             </div>
-            {/* الحالة */}
             <div className="space-y-1.5">
-              <Label>الحالة</Label>
+              <Label>{t("patients", "status")}</Label>
               <Select value={form.status} onValueChange={v => setForm({ ...form, status: v as any })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="new">جديد</SelectItem>
-                  <SelectItem value="follow-up">متابعة</SelectItem>
-                  <SelectItem value="stable">مستقر</SelectItem>
-                  <SelectItem value="critical">حرج</SelectItem>
+                  <SelectItem value="new">{t("patients", "statusNew")}</SelectItem>
+                  <SelectItem value="follow-up">{t("patients", "statusFollowUp")}</SelectItem>
+                  <SelectItem value="stable">{t("patients", "statusStable")}</SelectItem>
+                  <SelectItem value="critical">{t("patients", "statusCritical")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            {/* الأمراض المزمنة */}
             <div className="sm:col-span-2 space-y-1.5">
-              <Label>الأمراض المزمنة</Label>
-              <Input value={form.chronicDiseases} onChange={e => setForm({ ...form, chronicDiseases: e.target.value })} placeholder="مثال: السكري، ضغط الدم" />
+              <Label>{t("patients", "chronicDiseases")}</Label>
+              <Input value={form.chronicDiseases} onChange={e => setForm({ ...form, chronicDiseases: e.target.value })} placeholder={t("patients", "chronicDiseasesPlaceholder")} />
             </div>
-            {/* التاجات */}
             <div className="sm:col-span-2 space-y-1.5">
-              <Label className="flex items-center gap-1.5"><Tag className="w-3.5 h-3.5" /> التاجات</Label>
-              <TagInput value={form.tags} onChange={tags => setForm({ ...form, tags })} placeholder="أضف تاج (مثال: سكري، ضغط)..." />
-              <p className="text-xs text-muted-foreground">اضغط Enter أو فاصلة لإضافة تاج جديد</p>
+              <Label className="flex items-center gap-1.5"><Tag className="w-3.5 h-3.5" /> {t("patients", "tags")}</Label>
+              <TagInput value={form.tags} onChange={tags => setForm({ ...form, tags })} placeholder={t("patients", "tagsPlaceholder")} />
             </div>
-            {/* الملاحظات الطبية */}
             <div className="sm:col-span-2 space-y-1.5">
-              <Label>الملاحظات الطبية</Label>
-              <Textarea value={form.medicalNotes} onChange={e => setForm({ ...form, medicalNotes: e.target.value })} rows={3} placeholder="أي ملاحظات طبية إضافية..." />
+              <Label>{t("patients", "medicalNotes")}</Label>
+              <Textarea value={form.medicalNotes} onChange={e => setForm({ ...form, medicalNotes: e.target.value })} rows={3} placeholder={t("patients", "medicalNotesPlaceholder")} />
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowForm(false)}>إلغاء</Button>
+            <Button variant="outline" onClick={() => setShowForm(false)}>{t("common", "cancel")}</Button>
             <Button onClick={handleSubmit} disabled={createMutation.isPending || updateMutation.isPending}>
-              {createMutation.isPending || updateMutation.isPending ? "جارٍ الحفظ..." : editId ? "تحديث" : "إنشاء المريض"}
+              {createMutation.isPending || updateMutation.isPending ? t("common", "saving") : editId ? t("common", "update") : t("patients", "createPatient")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -320,11 +317,11 @@ export default function Patients() {
 
       <Dialog open={!!deleteId} onOpenChange={v => !v && setDeleteId(null)}>
         <DialogContent className="max-w-sm" aria-describedby="archive-desc">
-          <DialogHeader><DialogTitle>أرشفة المريض؟</DialogTitle><DialogDescription id="archive-desc">سيتم نقل هذا المريض إلى الأرشيف. يمكنك استعادته لاحقاً.</DialogDescription></DialogHeader>
+          <DialogHeader><DialogTitle>{t("patients", "archivePatient")}</DialogTitle><DialogDescription id="archive-desc">{t("patients", "archiveConfirm")}</DialogDescription></DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteId(null)}>إلغاء</Button>
+            <Button variant="outline" onClick={() => setDeleteId(null)}>{t("common", "cancel")}</Button>
             <Button variant="destructive" onClick={() => deleteId && deleteMutation.mutate({ id: deleteId })} disabled={deleteMutation.isPending}>
-              {deleteMutation.isPending ? "جارٍ الأرشفة..." : "أرشفة"}
+              {deleteMutation.isPending ? t("common", "saving") : t("patients", "archive")}
             </Button>
           </DialogFooter>
         </DialogContent>

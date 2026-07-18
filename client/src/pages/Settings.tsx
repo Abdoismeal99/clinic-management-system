@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Settings as SettingsIcon, Building2, User, Upload, Globe, Shield, Save, Camera, X, Plus, Pencil, Trash2, Stethoscope, Users } from "lucide-react";
+import { useSettings } from "@/contexts/SettingsContext";
 
 const SETTING_KEYS = {
   clinicName: "clinic_name",
@@ -39,6 +40,7 @@ export default function Settings() {
   const { user } = useAuth();
   const utils = trpc.useUtils();
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const { t, setLanguageOverride } = useSettings();
 
   const { data: settingsData, isLoading } = trpc.settings.getAll.useQuery();
   const upsertManyMutation = trpc.settings.upsertMany.useMutation({
@@ -123,6 +125,8 @@ export default function Settings() {
   };
 
   const savePrefs = () => {
+    // Apply language change instantly
+    setLanguageOverride(prefs.language as any);
     upsertManyMutation.mutate(Object.entries(prefs).map(([k, v]) => ({ key: (SETTING_KEYS as any)[k], value: v })));
   };
 
@@ -159,8 +163,8 @@ export default function Settings() {
   return (
     <div className="p-6 space-y-5 max-w-4xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2"><SettingsIcon className="w-6 h-6 text-primary" /> الإعدادات</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">إدارة معلومات العيادة والتفضيلات وإعدادات النظام</p>
+        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2"><SettingsIcon className="w-6 h-6 text-primary" /> {t("settings", "title")}</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">{t("settings", "subtitle")}</p>
       </div>
 
       {!isAdmin && (
@@ -172,12 +176,12 @@ export default function Settings() {
 
       <Tabs defaultValue="profile">
         <TabsList className="h-9 flex-wrap gap-1">
-          <TabsTrigger value="profile" className="text-sm gap-1.5"><User className="w-3.5 h-3.5" /> حسابي</TabsTrigger>
-          <TabsTrigger value="clinic" className="text-sm gap-1.5"><Building2 className="w-3.5 h-3.5" /> العيادة</TabsTrigger>
-          <TabsTrigger value="doctor" className="text-sm gap-1.5"><Stethoscope className="w-3.5 h-3.5" /> الطبيب الرئيسي</TabsTrigger>
-          <TabsTrigger value="doctors" className="text-sm gap-1.5"><Users className="w-3.5 h-3.5" /> الأطباء</TabsTrigger>
-          <TabsTrigger value="surgeryTypes" className="text-sm gap-1.5"><Stethoscope className="w-3.5 h-3.5" /> أنواع العمليات</TabsTrigger>
-          <TabsTrigger value="preferences" className="text-sm gap-1.5"><Globe className="w-3.5 h-3.5" /> التفضيلات</TabsTrigger>
+          <TabsTrigger value="profile" className="text-sm gap-1.5"><User className="w-3.5 h-3.5" /> {t("settings", "myAccount")}</TabsTrigger>
+          <TabsTrigger value="clinic" className="text-sm gap-1.5"><Building2 className="w-3.5 h-3.5" /> {t("settings", "clinic")}</TabsTrigger>
+          <TabsTrigger value="doctor" className="text-sm gap-1.5"><Stethoscope className="w-3.5 h-3.5" /> {t("settings", "mainDoctor")}</TabsTrigger>
+          <TabsTrigger value="doctors" className="text-sm gap-1.5"><Users className="w-3.5 h-3.5" /> {t("settings", "doctors")}</TabsTrigger>
+          <TabsTrigger value="surgeryTypes" className="text-sm gap-1.5"><Stethoscope className="w-3.5 h-3.5" /> {t("settings", "surgeryTypes")}</TabsTrigger>
+          <TabsTrigger value="preferences" className="text-sm gap-1.5"><Globe className="w-3.5 h-3.5" /> {t("settings", "preferences")}</TabsTrigger>
         </TabsList>
 
         {/* My Profile */}
@@ -345,10 +349,8 @@ export default function Settings() {
                   <Select value={prefs.language} onValueChange={(v) => setPrefs({ ...prefs, language: v })} disabled={!isAdmin}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ar">العربية</SelectItem>
-                      <SelectItem value="en">English</SelectItem>
-                      <SelectItem value="fr">Français</SelectItem>
-                      <SelectItem value="tr">Türkçe</SelectItem>
+                      <SelectItem value="ar">{t("settings", "langArabic")}</SelectItem>
+                      <SelectItem value="en">{t("settings", "langEnglish")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -401,7 +403,7 @@ export default function Settings() {
               {isAdmin && (
                 <div className="flex justify-end">
                   <Button onClick={savePrefs} disabled={upsertManyMutation.isPending} className="gap-2">
-                    <Save className="w-4 h-4" /> {upsertManyMutation.isPending ? "جاري الحفظ..." : "حفظ التفضيلات"}
+                    <Save className="w-4 h-4" /> {upsertManyMutation.isPending ? t("common", "saving") : t("settings", "savePrefs")}
                   </Button>
                 </div>
               )}

@@ -1,9 +1,10 @@
-import { createContext, useContext, useEffect, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { type Lang, translations, type TranslationKey } from "@/lib/translations";
 
 interface ClinicSettings {
-  language: string;
+  language: Lang;
   timezone: string;
   dateFormat: string;
   currency: string;
@@ -12,6 +13,11 @@ interface ClinicSettings {
   workingHoursEnd: string;
   clinicName: string;
   clinicLogo: string;
+}
+
+interface SettingsContextValue extends ClinicSettings {
+  t: (section: TranslationKey, key: string) => string;
+  setLanguageOverride: (lang: Lang) => void;
 }
 
 const defaultSettings: ClinicSettings = {
@@ -26,7 +32,14 @@ const defaultSettings: ClinicSettings = {
   clinicLogo: "",
 };
 
-const SettingsContext = createContext<ClinicSettings>(defaultSettings);
+const SettingsContext = createContext<SettingsContextValue>({
+  ...defaultSettings,
+  t: (section, key) => {
+    const sectionData = translations[section] as Record<string, { ar: string; en: string }>;
+    return sectionData?.[key]?.["ar"] ?? key;
+  },
+  setLanguageOverride: () => {},
+});
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -35,11 +48,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Language override allows instant switching before DB save
+  const [langOverride, setLangOverride] = useState<Lang | null>(null);
+
   const settings: ClinicSettings = { ...defaultSettings };
 
   if (settingsData) {
     const get = (key: string) => (settingsData as any[]).find((s) => s.key === key)?.value ?? "";
-    settings.language = get("language") || "ar";
+    const savedLang = get("language");
+    settings.language = (savedLang === "en" ? "en" : "ar") as Lang;
     settings.timezone = get("timezone") || "Africa/Cairo";
     settings.dateFormat = get("date_format") || "DD/MM/YYYY";
     settings.currency = get("currency") || "EGP";
@@ -50,38 +67,62 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     settings.clinicLogo = get("clinic_logo") || "";
   }
 
+  const activeLang: Lang = langOverride ?? settings.language;
+
   // Apply language direction and locale to document
   useEffect(() => {
-    const lang = settings.language;
-    const isRTL = ["ar", "he", "fa", "ur"].includes(lang);
-    document.documentElement.lang = lang;
+    const isRTL = activeLang === "ar";
+    document.documentElement.lang = activeLang;
     document.documentElement.dir = isRTL ? "rtl" : "ltr";
-  }, [settings.language]);
+  }, [activeLang]);
 
-  return (
-    <SettingsContext.Provider value={settings}>
-      {children}
-    </SettingsContext.Provider>
+  const translate = useCallback(
+    (section: TranslationKey, key: string): string => {
+      const sectionData = translations[section] as Record<string, { ar: string; en: string }>;
+      return sectionData?.[key]?.[activeLang] ?? sectionData?.[key]?.["ar"] ?? key;
+    },
+    [activeLang]
   );
+
+  const value: SettingsContextValue = {
+    ...settings,
+    language: activeLang,
+    t: translate,
+    setLanguageOverride: setLangOverride,
+  };
+
+  return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;
 }
 
 export function useSettings() {
   return useContext(SettingsContext);
 }
 
+/** Shorthand hook: const { t } = useT(); t("common", "save") */
+export function useT() {
+  const ctx = useContext(SettingsContext);
+  return { t: ctx.t, lang: ctx.language };
+}
+
 /**
- * Format a date using the clinic's saved date format and timezone
+ * Format a date using the clinic's saved timezone
  */
 export function useFormatDate() {
-  const { dateFormat, timezone } = useSettings();
+  const { timezone, language } = useContext(SettingsContext);
   return (date: Date | string | number | null | undefined): string => {
     if (!date) return "—";
     const d = new Date(date);
     if (isNaN(d.getTime())) return "—";
     try {
-      return d.toLocaleDateString("ar-EG", { timeZone: timezone, day: "2-digit", month: "2-digit", year: "numeric" });
+      const locale = language === "ar" ? "ar-EG" : "en-GB";
+      return d.toLocaleDateString(locale, {
+        timeZone: timezone,
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
     } catch {
-      return d.toLocaleDateString("ar-EG");
+      return d.toLocaleDateString();
     }
   };
 }

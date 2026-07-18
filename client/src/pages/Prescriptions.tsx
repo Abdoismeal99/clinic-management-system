@@ -1,5 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useT } from "@/contexts/SettingsContext";
 import { useState, useRef } from "react";
 import { useSearch, Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +27,7 @@ export default function Prescriptions() {
   const preRxId = params.get("rxId") ? parseInt(params.get("rxId")!) : null;
 
   const { user } = useAuth();
+  const { t } = useT();
   const utils = trpc.useUtils();
   const printRef = useRef<HTMLDivElement>(null);
 
@@ -123,16 +125,16 @@ export default function Prescriptions() {
     <div className="p-6 space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Prescriptions</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Manage prescriptions and templates</p>
+          <h1 className="text-2xl font-bold text-foreground">{t("prescriptions", "title")}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{t("prescriptions", "useTemplate")} & {t("prescriptions", "saveAsTemplate")}</p>
         </div>
         {canManage && (
           <div className="flex gap-2">
             <Button variant="outline" size="sm" className="gap-2 h-9" onClick={() => setShowTemplate(true)}>
-              <BookTemplate className="w-4 h-4" /> New Template
+              <BookTemplate className="w-4 h-4" /> {t("prescriptions", "saveAsTemplate")}
             </Button>
             <Button size="sm" className="gap-2 h-9" onClick={() => setShowCreate(true)}>
-              <Plus className="w-4 h-4" /> New Prescription
+              <Plus className="w-4 h-4" /> {t("prescriptions", "addPrescription")}
             </Button>
           </div>
         )}
@@ -140,8 +142,8 @@ export default function Prescriptions() {
 
       <Tabs defaultValue="prescriptions">
         <TabsList className="h-9">
-          <TabsTrigger value="prescriptions" className="text-sm">Prescriptions</TabsTrigger>
-          <TabsTrigger value="templates" className="text-sm">Templates</TabsTrigger>
+          <TabsTrigger value="prescriptions" className="text-sm">{t("prescriptions", "title")}</TabsTrigger>
+          <TabsTrigger value="templates" className="text-sm">{t("prescriptions", "saveAsTemplate")}</TabsTrigger>
         </TabsList>
 
         {/* Prescriptions Tab */}
@@ -151,13 +153,13 @@ export default function Prescriptions() {
             <CardContent className="p-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Search Patient</Label>
-                  <Input placeholder="Type patient name..." value={patientSearch} onChange={(e) => setPatientSearch(e.target.value)} className="h-8 text-sm" />
+                  <Label className="text-xs text-muted-foreground">{t("patients", "searchPlaceholder")}</Label>
+                  <Input placeholder={t("patients", "searchPlaceholder")} value={patientSearch} onChange={(e) => setPatientSearch(e.target.value)} className="h-8 text-sm" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Select Patient</Label>
+                  <Label className="text-xs text-muted-foreground">{t("visits", "patient")}</Label>
                   <Select value={selectedPatientId ? selectedPatientId.toString() : ""} onValueChange={(v) => setSelectedPatientId(parseInt(v))}>
-                    <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Select a patient" /></SelectTrigger>
+                    <SelectTrigger className="h-8 text-sm"><SelectValue placeholder={t("surgeries", "selectPatient")} /></SelectTrigger>
                     <SelectContent>
                       {patientsData?.data?.map((p) => (
                         <SelectItem key={p.id} value={p.id.toString()}>{p.fullName} ({p.patientId})</SelectItem>
@@ -172,15 +174,15 @@ export default function Prescriptions() {
           {!selectedPatientId ? (
             <div className="text-center py-16 text-muted-foreground">
               <Pill className="w-12 h-12 mx-auto mb-3 opacity-20" />
-              <p className="font-medium">Select a patient to view prescriptions</p>
+              <p className="font-medium">{t("prescriptions", "noPrescriptions")}</p>
             </div>
           ) : isLoading ? (
             <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-32" />)}</div>
           ) : (prescriptions?.length ?? 0) === 0 ? (
             <div className="text-center py-16 text-muted-foreground">
               <Pill className="w-12 h-12 mx-auto mb-3 opacity-20" />
-              <p className="font-medium">No prescriptions for this patient</p>
-              {canManage && <Button size="sm" className="mt-4 gap-2" onClick={() => setShowCreate(true)}><Plus className="w-3 h-3" /> Create First Prescription</Button>}
+              <p className="font-medium">{t("prescriptions", "noPrescriptions")}</p>
+              {canManage && <Button size="sm" className="mt-4 gap-2" onClick={() => setShowCreate(true)}><Plus className="w-3 h-3" /> {t("prescriptions", "addPrescription")}</Button>}
             </div>
           ) : (
             <div className="space-y-4">
@@ -213,7 +215,7 @@ export default function Prescriptions() {
                       </div>
                       <div className="flex flex-col gap-2 flex-shrink-0">
                         <Button variant="outline" size="sm" className="h-8 gap-2 text-xs" onClick={() => setPrintRxId(rx.id)}>
-                          <Printer className="w-3.5 h-3.5" /> Print
+                          <Printer className="w-3.5 h-3.5" /> {t("common", "print")}
                         </Button>
                         {canManage && (
                           <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteId(rx.id)}>
@@ -236,37 +238,37 @@ export default function Prescriptions() {
           ) : (templates?.length ?? 0) === 0 ? (
             <div className="text-center py-16 text-muted-foreground">
               <BookTemplate className="w-12 h-12 mx-auto mb-3 opacity-20" />
-              <p className="font-medium">No templates yet</p>
-              <p className="text-sm mt-1">Save frequently used prescriptions as templates for quick reuse</p>
-              {canManage && <Button size="sm" className="mt-4 gap-2" onClick={() => setShowTemplate(true)}><Plus className="w-3 h-3" /> Create Template</Button>}
+              <p className="font-medium">{t("prescriptions", "saveAsTemplate")}</p>
+              <p className="text-sm mt-1">{t("prescriptions", "useTemplate")}</p>
+              {canManage && <Button size="sm" className="mt-4 gap-2" onClick={() => setShowTemplate(true)}><Plus className="w-3 h-3" /> {t("prescriptions", "saveAsTemplate")}</Button>}
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {templates?.map((t) => (
-                <Card key={t.id} className="card-hover">
+              {templates?.map((tmpl) => (
+                <Card key={tmpl.id} className="card-hover">
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="font-semibold text-sm truncate">{t.name}</p>
-                          {t.isFavorite && <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 flex-shrink-0" />}
+                          <p className="font-semibold text-sm truncate">{tmpl.name}</p>
+                          {tmpl.isFavorite && <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 flex-shrink-0" />}
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">{Array.isArray(t.medications) ? t.medications.length : 0} medication(s)</p>
+                        <p className="text-xs text-muted-foreground mt-1">{Array.isArray(tmpl.medications) ? tmpl.medications.length : 0} {t("prescriptions", "medications")}</p>
                         <div className="mt-2 space-y-1">
-                          {Array.isArray(t.medications) && t.medications.slice(0, 2).map((m: any, i: number) => (
+                          {Array.isArray(tmpl.medications) && tmpl.medications.slice(0, 2).map((m: any, i: number) => (
                             <p key={i} className="text-xs text-muted-foreground">• {m.medicine} — {m.dose} · {m.frequency}</p>
                           ))}
-                          {Array.isArray(t.medications) && t.medications.length > 2 && (
-                            <p className="text-xs text-muted-foreground">+{t.medications.length - 2} more</p>
+                          {Array.isArray(tmpl.medications) && tmpl.medications.length > 2 && (
+                            <p className="text-xs text-muted-foreground">+{tmpl.medications.length - 2}</p>
                           )}
                         </div>
                       </div>
                       <div className="flex flex-col gap-1 flex-shrink-0">
-                        <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => loadTemplate(t)}>Use</Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" title={t.isFavorite ? "Remove favorite" : "Add to favorites"} onClick={() => toggleFavMutation.mutate({ id: t.id, isFavorite: !t.isFavorite })}>
-                          {t.isFavorite ? <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" /> : <StarOff className="w-3.5 h-3.5 text-muted-foreground" />}
+                        <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => loadTemplate(tmpl)}>{t("prescriptions", "useTemplate")}</Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => toggleFavMutation.mutate({ id: tmpl.id, isFavorite: !tmpl.isFavorite })}>
+                          {tmpl.isFavorite ? <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" /> : <StarOff className="w-3.5 h-3.5 text-muted-foreground" />}
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteTemplateId(t.id)}>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteTemplateId(tmpl.id)}>
                           <Trash2 className="w-3.5 h-3.5" />
                         </Button>
                       </div>
@@ -282,13 +284,13 @@ export default function Prescriptions() {
       {/* Create Prescription Dialog */}
       <Dialog open={showCreate} onOpenChange={(v) => setShowCreate(v)}>
         <DialogContent aria-describedby={undefined} className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><Pill className="w-5 h-5 text-primary" /> New Prescription</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Pill className="w-5 h-5 text-primary" /> {t("prescriptions", "addPrescription")}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             {/* Patient */}
             <div className="space-y-1.5">
-              <Label>Patient *</Label>
+              <Label>{t("visits", "patient")} *</Label>
               <Select value={selectedPatientId ? selectedPatientId.toString() : ""} onValueChange={(v) => setSelectedPatientId(parseInt(v))}>
-                <SelectTrigger><SelectValue placeholder="Select patient" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("surgeries", "selectPatient")} /></SelectTrigger>
                 <SelectContent>
                   {patientsData?.data?.map((p) => <SelectItem key={p.id} value={p.id.toString()}>{p.fullName} ({p.patientId})</SelectItem>)}
                 </SelectContent>
@@ -300,8 +302,8 @@ export default function Prescriptions() {
             {/* Medications */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <Label className="text-sm font-semibold">Medications *</Label>
-                <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={addMed}><Plus className="w-3 h-3" /> Add</Button>
+                <Label className="text-sm font-semibold">{t("prescriptions", "medications")} *</Label>
+                <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={addMed}><Plus className="w-3 h-3" /> {t("common", "add")}</Button>
               </div>
               <div className="space-y-4">
                 {medications.map((med, i) => (
@@ -315,11 +317,11 @@ export default function Prescriptions() {
                       )}
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="sm:col-span-2 space-y-1"><Label className="text-xs">Medicine Name *</Label><Input value={med.medicine} onChange={(e) => updateMed(i, "medicine", e.target.value)} placeholder="e.g. Amoxicillin" className="h-8 text-sm" /></div>
-                      <div className="space-y-1"><Label className="text-xs">Dose *</Label><Input value={med.dose} onChange={(e) => updateMed(i, "dose", e.target.value)} placeholder="e.g. 500mg" className="h-8 text-sm" /></div>
-                      <div className="space-y-1"><Label className="text-xs">Frequency *</Label><Input value={med.frequency} onChange={(e) => updateMed(i, "frequency", e.target.value)} placeholder="e.g. 3x daily" className="h-8 text-sm" /></div>
-                      <div className="space-y-1"><Label className="text-xs">Duration *</Label><Input value={med.duration} onChange={(e) => updateMed(i, "duration", e.target.value)} placeholder="e.g. 7 days" className="h-8 text-sm" /></div>
-                      <div className="space-y-1"><Label className="text-xs">Instructions</Label><Input value={med.instructions} onChange={(e) => updateMed(i, "instructions", e.target.value)} placeholder="e.g. Take after meals" className="h-8 text-sm" /></div>
+                      <div className="sm:col-span-2 space-y-1"><Label className="text-xs">{t("prescriptions", "medicine")} *</Label><Input value={med.medicine} onChange={(e) => updateMed(i, "medicine", e.target.value)} placeholder="e.g. Amoxicillin" className="h-8 text-sm" /></div>
+                      <div className="space-y-1"><Label className="text-xs">{t("prescriptions", "dose")} *</Label><Input value={med.dose} onChange={(e) => updateMed(i, "dose", e.target.value)} placeholder="e.g. 500mg" className="h-8 text-sm" /></div>
+                      <div className="space-y-1"><Label className="text-xs">{t("prescriptions", "frequency")} *</Label><Input value={med.frequency} onChange={(e) => updateMed(i, "frequency", e.target.value)} placeholder="e.g. 3x daily" className="h-8 text-sm" /></div>
+                      <div className="space-y-1"><Label className="text-xs">{t("prescriptions", "duration")} *</Label><Input value={med.duration} onChange={(e) => updateMed(i, "duration", e.target.value)} placeholder="e.g. 7 days" className="h-8 text-sm" /></div>
+                      <div className="space-y-1"><Label className="text-xs">{t("prescriptions", "instructions")}</Label><Input value={med.instructions} onChange={(e) => updateMed(i, "instructions", e.target.value)} placeholder="e.g. Take after meals" className="h-8 text-sm" /></div>
                     </div>
                   </div>
                 ))}
@@ -327,14 +329,14 @@ export default function Prescriptions() {
             </div>
 
             <div className="space-y-1.5">
-              <Label>Notes</Label>
-              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Additional instructions or notes..." />
+              <Label>{t("common", "notes")}</Label>
+              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder={t("common", "notes")} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowCreate(false)}>{t("common", "cancel")}</Button>
             <Button onClick={handleCreate} disabled={createMutation.isPending} className="gap-2">
-              {createMutation.isPending ? "Creating..." : "Create Prescription"}
+              {createMutation.isPending ? t("common", "saving") : t("prescriptions", "addPrescription")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -343,22 +345,22 @@ export default function Prescriptions() {
       {/* Create Template Dialog */}
       <Dialog open={showTemplate} onOpenChange={(v) => setShowTemplate(v)}>
         <DialogContent aria-describedby={undefined} className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><BookTemplate className="w-5 h-5 text-primary" /> Save Prescription Template</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><BookTemplate className="w-5 h-5 text-primary" /> {t("prescriptions", "saveAsTemplate")}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5"><Label>Template Name *</Label><Input value={templateName} onChange={(e) => setTemplateName(e.target.value)} placeholder="e.g. Antibiotic Course" /></div>
+              <div className="space-y-1.5"><Label>{t("prescriptions", "treatmentName")} *</Label><Input value={templateName} onChange={(e) => setTemplateName(e.target.value)} placeholder="e.g. Antibiotic Course" /></div>
               <div className="flex items-end">
                 <Button variant={templateFavorite ? "default" : "outline"} className="gap-2 h-9" onClick={() => setTemplateFavorite(!templateFavorite)}>
                   {templateFavorite ? <Star className="w-4 h-4 fill-current" /> : <StarOff className="w-4 h-4" />}
-                  {templateFavorite ? "Favorite" : "Add to Favorites"}
+                  {templateFavorite ? t("common", "yes") : t("common", "add")}
                 </Button>
               </div>
             </div>
             <Separator />
             <div>
               <div className="flex items-center justify-between mb-3">
-                <Label className="text-sm font-semibold">Medications *</Label>
-                <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={addTemplateMed}><Plus className="w-3 h-3" /> Add</Button>
+                <Label className="text-sm font-semibold">{t("prescriptions", "medications")} *</Label>
+                <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={addTemplateMed}><Plus className="w-3 h-3" /> {t("common", "add")}</Button>
               </div>
               <div className="space-y-4">
                 {templateMeds.map((med, i) => (
@@ -380,9 +382,9 @@ export default function Prescriptions() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowTemplate(false)}>Cancel</Button>
-            <Button onClick={() => { if (!templateName) { toast.error("Template name required"); return; } createTemplateMutation.mutate({ name: templateName, medications: templateMeds, isFavorite: templateFavorite }); }} disabled={createTemplateMutation.isPending}>
-              {createTemplateMutation.isPending ? "Saving..." : "Save Template"}
+            <Button variant="outline" onClick={() => setShowTemplate(false)}>{t("common", "cancel")}</Button>
+            <Button onClick={() => { if (!templateName) { toast.error(t("common", "required")); return; } createTemplateMutation.mutate({ name: templateName, medications: templateMeds, isFavorite: templateFavorite }); }} disabled={createTemplateMutation.isPending}>
+              {createTemplateMutation.isPending ? t("common", "saving") : t("prescriptions", "saveAsTemplate")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -487,12 +489,12 @@ export default function Prescriptions() {
       {/* Delete Prescription */}
       <Dialog open={!!deleteId} onOpenChange={(v) => !v && setDeleteId(null)}>
         <DialogContent aria-describedby={undefined} className="max-w-sm">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><AlertCircle className="w-5 h-5 text-destructive" /> Delete Prescription?</DialogTitle></DialogHeader>
-          <p className="text-sm text-muted-foreground">This prescription will be permanently removed.</p>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><AlertCircle className="w-5 h-5 text-destructive" /> {t("common", "deleteConfirm")}</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">{t("common", "cannotUndo")}</p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDeleteId(null)}>{t("common", "cancel")}</Button>
             <Button variant="destructive" onClick={() => deleteId && deleteMutation.mutate({ id: deleteId })} disabled={deleteMutation.isPending}>
-              {deleteMutation.isPending ? "Deleting..." : "Delete"}
+              {deleteMutation.isPending ? t("common", "saving") : t("common", "delete")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -501,12 +503,12 @@ export default function Prescriptions() {
       {/* Delete Template */}
       <Dialog open={!!deleteTemplateId} onOpenChange={(v) => !v && setDeleteTemplateId(null)}>
         <DialogContent aria-describedby={undefined} className="max-w-sm">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><AlertCircle className="w-5 h-5 text-destructive" /> Delete Template?</DialogTitle></DialogHeader>
-          <p className="text-sm text-muted-foreground">This template will be permanently removed.</p>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><AlertCircle className="w-5 h-5 text-destructive" /> {t("common", "deleteConfirm")}</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">{t("common", "cannotUndo")}</p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTemplateId(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDeleteTemplateId(null)}>{t("common", "cancel")}</Button>
             <Button variant="destructive" onClick={() => deleteTemplateId && deleteTemplateMutation.mutate({ id: deleteTemplateId })} disabled={deleteTemplateMutation.isPending}>
-              {deleteTemplateMutation.isPending ? "Deleting..." : "Delete"}
+              {deleteTemplateMutation.isPending ? t("common", "saving") : t("common", "delete")}
             </Button>
           </DialogFooter>
         </DialogContent>

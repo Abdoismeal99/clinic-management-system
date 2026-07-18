@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { Calendar, List, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Clock, Scissors, User } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths, getDay } from "date-fns";
 import { APPT_STATUS_CLASSES, APPT_STATUS_LABELS } from "@/lib/types";
+import { useT } from "@/contexts/SettingsContext";
 
 const EMPTY_FORM = { patientId: 0, doctorId: 0, appointmentDate: new Date().toISOString().slice(0, 16), duration: 30, reason: "", notes: "", status: "pending" as const };
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -24,38 +25,42 @@ const SURGERY_STATUS_COLORS: Record<string, string> = {
   cancelled: "bg-red-100 text-red-700 border-red-200",
   postponed: "bg-amber-100 text-amber-700 border-amber-200",
 };
-const SURGERY_STATUS_LABELS: Record<string, string> = {
-  scheduled: "مجدولة", completed: "مكتملة", cancelled: "ملغاة", postponed: "مؤجلة",
+const SURGERY_STATUS_LABELS: Record<string, { ar: string; en: string }> = {
+  scheduled: { ar: "مجدولة", en: "Scheduled" },
+  completed: { ar: "مكتملة", en: "Completed" },
+  cancelled: { ar: "ملغاة", en: "Cancelled" },
+  postponed: { ar: "مؤجلة", en: "Postponed" },
 };
 
 function UpcomingSurgeries() {
+  const { t, lang } = useT();
   const { data: surgeries, isLoading } = trpc.surgeries.upcoming.useQuery({ days: 60 });
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold flex items-center gap-2">
-          <Scissors className="w-5 h-5 text-primary" /> العمليات الجراحية القادمة
+          <Scissors className="w-5 h-5 text-primary" /> {t("appointments", "upcomingSurgeries")}
         </h2>
-        <a href="/surgeries" className="text-sm text-primary hover:underline">عرض الكل</a>
+        <a href="/surgeries" className="text-sm text-primary hover:underline">{t("common", "viewAll")}</a>
       </div>
       {isLoading ? (
         <div className="space-y-2">{[1,2,3].map(i => <Skeleton key={i} className="h-16" />)}</div>
       ) : (surgeries ?? []).length === 0 ? (
         <Card><CardContent className="py-10 text-center text-muted-foreground">
           <Scissors className="w-10 h-10 mx-auto mb-2 opacity-20" />
-          <p className="text-sm">لا توجد عمليات قادمة خلال الستين يومًا القادمة</p>
+          <p className="text-sm">{t("appointments", "noUpcomingSurgeries")}</p>
         </CardContent></Card>
       ) : (
         <Card><CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead><tr className="border-b border-border bg-muted/40">
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground">المريض</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground">نوع العملية</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">الطبيب</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground">الموعد</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground">الحالة</th>
+                <th className="text-right px-4 py-3 font-medium text-muted-foreground">{t("patients", "patient")}</th>
+                <th className="text-right px-4 py-3 font-medium text-muted-foreground">{t("surgeries", "surgeryType")}</th>
+                <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">{t("surgeries", "doctor")}</th>
+                <th className="text-right px-4 py-3 font-medium text-muted-foreground">{t("common", "date")}</th>
+                <th className="text-right px-4 py-3 font-medium text-muted-foreground">{t("patients", "status")}</th>
               </tr></thead>
               <tbody className="divide-y divide-border">
                 {(surgeries ?? []).map((s: any) => (
@@ -78,7 +83,7 @@ function UpcomingSurgeries() {
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${SURGERY_STATUS_COLORS[s.status] ?? ''}`}>
-                        {SURGERY_STATUS_LABELS[s.status] ?? s.status}
+                        {(SURGERY_STATUS_LABELS[s.status] as any)?.[lang] ?? s.status}
                       </span>
                     </td>
                   </tr>
@@ -94,6 +99,7 @@ function UpcomingSurgeries() {
 
 export default function Appointments() {
   const { user } = useAuth();
+  const { t } = useT();
   const utils = trpc.useUtils();
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("");
@@ -113,9 +119,9 @@ export default function Appointments() {
   const selectedDayAppts = selectedDay ? getApptForDay(selectedDay) : [];
   const { data: patients } = trpc.patients.list.useQuery({ limit: 200 });
   const { data: doctors } = trpc.users.list.useQuery();
-  const createMutation = trpc.appointments.create.useMutation({ onSuccess: () => { toast.success("Appointment scheduled"); utils.appointments.list.invalidate(); setShowForm(false); setForm({ ...EMPTY_FORM }); }, onError: (e) => toast.error(e.message) });
-  const updateMutation = trpc.appointments.update.useMutation({ onSuccess: () => { toast.success("Appointment updated"); utils.appointments.list.invalidate(); setShowForm(false); setEditId(null); }, onError: (e) => toast.error(e.message) });
-  const deleteMutation = trpc.appointments.delete.useMutation({ onSuccess: () => { toast.success("Appointment deleted"); utils.appointments.list.invalidate(); setDeleteId(null); }, onError: (e) => toast.error(e.message) });
+  const createMutation = trpc.appointments.create.useMutation({ onSuccess: () => { toast.success(t("appointments", "appointmentScheduled")); utils.appointments.list.invalidate(); setShowForm(false); setForm({ ...EMPTY_FORM }); }, onError: (e) => toast.error(e.message) });
+  const updateMutation = trpc.appointments.update.useMutation({ onSuccess: () => { toast.success(t("appointments", "appointmentUpdated")); utils.appointments.list.invalidate(); setShowForm(false); setEditId(null); }, onError: (e) => toast.error(e.message) });
+  const deleteMutation = trpc.appointments.delete.useMutation({ onSuccess: () => { toast.success(t("appointments", "appointmentDeleted")); utils.appointments.list.invalidate(); setDeleteId(null); }, onError: (e) => toast.error(e.message) });
   const openCreate = (date?: Date) => { const dt = date ? new Date(date) : new Date(); dt.setHours(9, 0, 0, 0); setForm({ ...EMPTY_FORM, doctorId: user?.id ?? 0, appointmentDate: dt.toISOString().slice(0, 16) }); setEditId(null); setShowForm(true); };
   const openEdit = (a: any) => { setForm({ patientId: a.patientId, doctorId: a.doctorId, appointmentDate: format(new Date(a.appointmentDate), "yyyy-MM-dd'T'HH:mm"), duration: a.duration ?? 30, reason: a.reason ?? "", notes: a.notes ?? "", status: a.status }); setEditId(a.id); setShowForm(true); };
   const handleSubmit = () => { if (!form.patientId) { toast.error("Select a patient"); return; } if (!form.doctorId) { toast.error("Select a doctor"); return; } const payload = { patientId: form.patientId, doctorId: form.doctorId, appointmentDate: form.appointmentDate, duration: form.duration, reason: form.reason || undefined, notes: form.notes || undefined, status: form.status }; if (editId) updateMutation.mutate({ id: editId, ...payload }); else createMutation.mutate(payload); };
@@ -123,13 +129,13 @@ export default function Appointments() {
   return (
     <div className="p-6 space-y-5 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold text-foreground">المواعيد</h1><p className="text-sm text-muted-foreground mt-0.5">{data?.total ?? 0} total appointments</p></div>
+        <div><h1 className="text-2xl font-bold text-foreground">{t("appointments", "title")}</h1><p className="text-sm text-muted-foreground mt-0.5">{data?.total ?? 0} {t("appointments", "totalAppointments")}</p></div>
         <div className="flex items-center gap-2">
           <div className="flex rounded-lg border border-border overflow-hidden">
-            <button onClick={() => setViewMode("list")} className={`px-3 py-1.5 text-sm flex items-center gap-1.5 transition-colors ${viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}><List className="w-3.5 h-3.5" /> List</button>
-            <button onClick={() => setViewMode("calendar")} className={`px-3 py-1.5 text-sm flex items-center gap-1.5 transition-colors ${viewMode === "calendar" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}><Calendar className="w-3.5 h-3.5" /> Calendar</button>
+            <button onClick={() => setViewMode("list")} className={`px-3 py-1.5 text-sm flex items-center gap-1.5 transition-colors ${viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}><List className="w-3.5 h-3.5" /> {t("appointments", "listView")}</button>
+            <button onClick={() => setViewMode("calendar")} className={`px-3 py-1.5 text-sm flex items-center gap-1.5 transition-colors ${viewMode === "calendar" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}><Calendar className="w-3.5 h-3.5" /> {t("appointments", "calendarView")}</button>
           </div>
-          <Button onClick={() => openCreate()} size="sm" className="gap-2 h-9"><Plus className="w-4 h-4" /> Schedule</Button>
+          <Button onClick={() => openCreate()} size="sm" className="gap-2 h-9"><Plus className="w-4 h-4" /> {t("appointments", "schedule")}</Button>
         </div>
       </div>
       {viewMode === "calendar" && (
@@ -204,22 +210,22 @@ export default function Appointments() {
       <div className="flex gap-3">
         <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v === "all" ? "" : v); setPage(1); }}>
           <SelectTrigger className="w-40 h-9"><SelectValue placeholder="All Statuses" /></SelectTrigger>
-          <SelectContent><SelectItem value="all">All Statuses</SelectItem><SelectItem value="pending">قيد الانتظار</SelectItem><SelectItem value="completed">مكتمل</SelectItem><SelectItem value="cancelled">ملغى</SelectItem><SelectItem value="no-show">No Show</SelectItem></SelectContent>
+          <SelectContent><SelectItem value="all">{t("appointments", "allStatuses")}</SelectItem><SelectItem value="pending">{t("appointments", "statusPending")}</SelectItem><SelectItem value="completed">{t("appointments", "statusCompleted")}</SelectItem><SelectItem value="cancelled">{t("appointments", "statusCancelled")}</SelectItem><SelectItem value="no-show">{t("appointments", "statusNoShow")}</SelectItem></SelectContent>
         </Select>
       </div>
       <Card><CardContent className="p-0">
         {isLoading ? <div className="p-4 space-y-3">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16" />)}</div>
-        : data?.data?.length === 0 ? <div className="text-center py-16 text-muted-foreground"><Calendar className="w-12 h-12 mx-auto mb-3 opacity-20" /><p className="font-medium">No appointments found</p><Button onClick={() => openCreate()} className="mt-4 gap-2" size="sm"><Plus className="w-4 h-4" /> Schedule</Button></div>
+        : data?.data?.length === 0 ? <div className="text-center py-16 text-muted-foreground"><Calendar className="w-12 h-12 mx-auto mb-3 opacity-20" /><p className="font-medium">{t("appointments", "noAppointments")}</p><Button onClick={() => openCreate()} className="mt-4 gap-2" size="sm"><Plus className="w-4 h-4" /> {t("appointments", "schedule")}</Button></div>
         : <>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead><tr className="border-b border-border bg-muted/40">
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">المريض</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">الطبيب</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Date & Time</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">السبب</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">الحالة</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground">الإجراءات</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">{t("patients", "patient")}</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">{t("surgeries", "doctor")}</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">{t("appointments", "dateTime")}</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">{t("appointments", "reason")}</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">{t("patients", "status")}</th>
+                <th className="text-right px-4 py-3 font-medium text-muted-foreground">{t("common", "actions")}</th>
               </tr></thead>
               <tbody className="divide-y divide-border">
                 {data?.data?.map((a) => (
@@ -238,7 +244,7 @@ export default function Appointments() {
               </tbody>
             </table>
           </div>
-          {totalPages > 1 && <div className="flex items-center justify-between px-4 py-3 border-t border-border"><p className="text-sm text-muted-foreground">Page {page} of {totalPages}</p><div className="flex gap-2"><Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="h-8 gap-1"><ChevronLeft className="w-3 h-3" /> Prev</Button><Button variant="outline" size="sm" onClick={() => setPage((p) => p + 1)} disabled={page >= totalPages} className="h-8 gap-1">Next <ChevronRight className="w-3 h-3" /></Button></div></div>}
+          {totalPages > 1 && <div className="flex items-center justify-between px-4 py-3 border-t border-border"><p className="text-sm text-muted-foreground">{t("common", "page")} {page} {t("common", "of")} {totalPages}</p><div className="flex gap-2"><Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="h-8 gap-1"><ChevronLeft className="w-3 h-3" /> {t("common", "prev")}</Button><Button variant="outline" size="sm" onClick={() => setPage((p) => p + 1)} disabled={page >= totalPages} className="h-8 gap-1">{t("common", "next")} <ChevronRight className="w-3 h-3" /></Button></div></div>}
         </>}
       </CardContent></Card>
 
@@ -249,20 +255,20 @@ export default function Appointments() {
 
       <Dialog open={showForm} onOpenChange={(v) => { setShowForm(v); if (!v) setEditId(null); }}>
         <DialogContent aria-describedby={undefined} className="max-w-lg">
-          <DialogHeader><DialogTitle>{editId ? "Edit Appointment" : "Schedule Appointment"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editId ? t("appointments", "editAppointment") : t("appointments", "scheduleAppointment")}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
-            <div className="sm:col-span-2 space-y-1.5"><Label>Patient *</Label><Select value={form.patientId.toString()} onValueChange={(v) => setForm({ ...form, patientId: parseInt(v) })}><SelectTrigger><SelectValue placeholder="Select patient" /></SelectTrigger><SelectContent>{patients?.data?.map((p) => <SelectItem key={p.id} value={p.id.toString()}>{p.fullName} ({p.patientId})</SelectItem>)}</SelectContent></Select></div>
-            <div className="sm:col-span-2 space-y-1.5"><Label>Doctor *</Label><Select value={form.doctorId.toString()} onValueChange={(v) => setForm({ ...form, doctorId: parseInt(v) })}><SelectTrigger><SelectValue placeholder="Select doctor" /></SelectTrigger><SelectContent>{doctors?.filter((d) => d.role === "doctor" || d.role === "admin").map((d) => <SelectItem key={d.id} value={d.id.toString()}>{d.name ?? d.email ?? `User #${d.id}`}</SelectItem>)}</SelectContent></Select></div>
-            <div className="space-y-1.5"><Label>Date & Time *</Label><Input type="datetime-local" value={form.appointmentDate} onChange={(e) => setForm({ ...form, appointmentDate: e.target.value })} /></div>
-            <div className="space-y-1.5"><Label>Duration (min)</Label><Input type="number" value={form.duration} onChange={(e) => setForm({ ...form, duration: parseInt(e.target.value) || 30 })} /></div>
-            <div className="sm:col-span-2 space-y-1.5"><Label>السبب</Label><Input value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder="Reason for visit" /></div>
-            <div className="space-y-1.5"><Label>الحالة</Label><Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as any })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="pending">قيد الانتظار</SelectItem><SelectItem value="completed">مكتمل</SelectItem><SelectItem value="cancelled">ملغى</SelectItem><SelectItem value="no-show">No Show</SelectItem></SelectContent></Select></div>
-            <div className="sm:col-span-2 space-y-1.5"><Label>الملاحظات</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} /></div>
+            <div className="sm:col-span-2 space-y-1.5"><Label>{t("patients", "patient")} *</Label><Select value={form.patientId.toString()} onValueChange={(v) => setForm({ ...form, patientId: parseInt(v) })}><SelectTrigger><SelectValue placeholder="Select patient" /></SelectTrigger><SelectContent>{patients?.data?.map((p) => <SelectItem key={p.id} value={p.id.toString()}>{p.fullName} ({p.patientId})</SelectItem>)}</SelectContent></Select></div>
+            <div className="sm:col-span-2 space-y-1.5"><Label>{t("surgeries", "doctor")} *</Label><Select value={form.doctorId.toString()} onValueChange={(v) => setForm({ ...form, doctorId: parseInt(v) })}><SelectTrigger><SelectValue placeholder="Select doctor" /></SelectTrigger><SelectContent>{doctors?.filter((d) => d.role === "doctor" || d.role === "admin").map((d) => <SelectItem key={d.id} value={d.id.toString()}>{d.name ?? d.email ?? `User #${d.id}`}</SelectItem>)}</SelectContent></Select></div>
+            <div className="space-y-1.5"><Label>{t("appointments", "dateTime")} *</Label><Input type="datetime-local" value={form.appointmentDate} onChange={(e) => setForm({ ...form, appointmentDate: e.target.value })} /></div>
+            <div className="space-y-1.5"><Label>{t("appointments", "duration")}</Label><Input type="number" value={form.duration} onChange={(e) => setForm({ ...form, duration: parseInt(e.target.value) || 30 })} /></div>
+            <div className="sm:col-span-2 space-y-1.5"><Label>{t("appointments", "reason")}</Label><Input value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder="Reason for visit" /></div>
+            <div className="space-y-1.5"><Label>{t("patients", "status")}</Label><Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as any })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="pending">{t("appointments", "statusPending")}</SelectItem><SelectItem value="completed">{t("appointments", "statusCompleted")}</SelectItem><SelectItem value="cancelled">{t("appointments", "statusCancelled")}</SelectItem><SelectItem value="no-show">{t("appointments", "statusNoShow")}</SelectItem></SelectContent></Select></div>
+            <div className="sm:col-span-2 space-y-1.5"><Label>{t("common", "notes")}</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} /></div>
           </div>
-          <DialogFooter><Button variant="outline" onClick={() => setShowForm(false)}>إلغاء</Button><Button onClick={handleSubmit} disabled={createMutation.isPending || updateMutation.isPending}>{createMutation.isPending || updateMutation.isPending ? "جاري الحفظ..." : editId ? "Update" : "Schedule"}</Button></DialogFooter>
+          <DialogFooter><Button variant="outline" onClick={() => setShowForm(false)}>{t("common", "cancel")}</Button><Button onClick={handleSubmit} disabled={createMutation.isPending || updateMutation.isPending}>{createMutation.isPending || updateMutation.isPending ? t("common", "saving") : editId ? t("common", "update") : t("appointments", "schedule")}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
-      <Dialog open={!!deleteId} onOpenChange={(v) => !v && setDeleteId(null)}><DialogContent aria-describedby={undefined} className="max-w-sm"><DialogHeader><DialogTitle>حذف الموعد؟</DialogTitle></DialogHeader><p className="text-sm text-muted-foreground">لا يمكن التراجع عن هذا الإجراء.</p><DialogFooter><Button variant="outline" onClick={() => setDeleteId(null)}>إلغاء</Button><Button variant="destructive" onClick={() => deleteId && deleteMutation.mutate({ id: deleteId })} disabled={deleteMutation.isPending}>{deleteMutation.isPending ? "جاري الحذف..." : "Delete"}</Button></DialogFooter></DialogContent></Dialog>
+      <Dialog open={!!deleteId} onOpenChange={(v) => !v && setDeleteId(null)}><DialogContent aria-describedby={undefined} className="max-w-sm"><DialogHeader><DialogTitle>{t("appointments", "deleteAppointment")}</DialogTitle></DialogHeader><p className="text-sm text-muted-foreground">{t("common", "cannotUndo")}</p><DialogFooter><Button variant="outline" onClick={() => setDeleteId(null)}>{t("common", "cancel")}</Button><Button variant="destructive" onClick={() => deleteId && deleteMutation.mutate({ id: deleteId })} disabled={deleteMutation.isPending}>{deleteMutation.isPending ? t("common", "saving") : t("common", "delete")}</Button></DialogFooter></DialogContent></Dialog>
     </div>
   );
 }

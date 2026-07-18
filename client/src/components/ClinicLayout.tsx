@@ -18,29 +18,30 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useT } from "@/contexts/SettingsContext";
 import NotSubscribed from "@/pages/NotSubscribed";
 
-const NAV_ITEMS = [
-  { label: "لوحة التحكم", icon: Home, href: "/" },
-  { label: "المرضى", icon: Users, href: "/patients" },
-  { label: "الزيارات", icon: Stethoscope, href: "/visits" },
-  { label: "الوصفات", icon: Pill, href: "/prescriptions" },
-  { label: "المواعيد", icon: Calendar, href: "/appointments" },
-  { label: "العمليات الجراحية", icon: Scissors, href: "/surgeries" },
-  { label: "الملفات", icon: FileText, href: "/files" },
-  { label: "بحث", icon: Search, href: "/search" },
-  { label: "التقارير", icon: BarChart3, href: "/reports" },
-  { label: "سجل النشاط", icon: Activity, href: "/activity" },
-  { label: "المساعد الذكي", icon: Sparkles, href: "/ai-assistant" },
+const NAV_ITEM_KEYS = [
+  { key: "dashboard", icon: Home, href: "/" },
+  { key: "patients", icon: Users, href: "/patients" },
+  { key: "visits", icon: Stethoscope, href: "/visits" },
+  { key: "prescriptions", icon: Pill, href: "/prescriptions" },
+  { key: "appointments", icon: Calendar, href: "/appointments" },
+  { key: "surgeries", icon: Scissors, href: "/surgeries" },
+  { key: "files", icon: FileText, href: "/files" },
+  { key: "search", icon: Search, href: "/search" },
+  { key: "reports", icon: BarChart3, href: "/reports" },
+  { key: "activityLog", icon: Activity, href: "/activity" },
+  { key: "aiAssistant", icon: Sparkles, href: "/ai-assistant" },
 ];
 
-const ADMIN_NAV_ITEMS = [
-  { label: "المستخدمون", icon: ClipboardList, href: "/users" },
-  { label: "الإعدادات", icon: Settings, href: "/settings" },
+const ADMIN_NAV_KEYS = [
+  { key: "users", icon: ClipboardList, href: "/users" },
+  { key: "settings", icon: Settings, href: "/settings" },
 ];
 
-const SUPER_ADMIN_ONLY_ITEMS = [
-  { label: "إدارة العملاء", icon: Users, href: "/admin/clients" },
+const SUPER_ADMIN_ONLY_KEYS = [
+  { key: "adminClients", icon: Users, href: "/admin/clients" },
 ];
 
 interface ClinicLayoutProps {
@@ -124,8 +125,13 @@ export default function ClinicLayout({ children }: ClinicLayoutProps) {
     return <NotSubscribed />;
   }
 
+  const { t } = useT();
   const userInitials = user?.name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) ?? "U";
   const isActive = (href: string) => href === "/" ? location === "/" : location.startsWith(href);
+
+  const NAV_ITEMS = NAV_ITEM_KEYS.map(item => ({ ...item, label: t("nav", item.key) }));
+  const ADMIN_NAV_ITEMS = ADMIN_NAV_KEYS.map(item => ({ ...item, label: t("nav", item.key) }));
+  const SUPER_ADMIN_ONLY_ITEMS = SUPER_ADMIN_ONLY_KEYS.map(item => ({ ...item, label: t("nav", item.key) }));
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
@@ -180,7 +186,7 @@ export default function ClinicLayout({ children }: ClinicLayoutProps) {
         {true && (
           <>
             <div className={cn("pt-3 pb-1", collapsed ? "px-0" : "px-3")}>
-              {!collapsed && <p className="text-xs font-semibold text-sidebar-foreground/40 uppercase tracking-wider">الإدارة</p>}
+              {!collapsed && <p className="text-xs font-semibold text-sidebar-foreground/40 uppercase tracking-wider">{t("nav", "admin")}</p>}
               {collapsed && <div className="border-t border-sidebar-border" />}
             </div>
             {[...ADMIN_NAV_ITEMS, ...(isSystemAdmin ? SUPER_ADMIN_ONLY_ITEMS : [])].map((item) => {
@@ -231,7 +237,7 @@ export default function ClinicLayout({ children }: ClinicLayoutProps) {
                 {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
             </TooltipTrigger>
-            <TooltipContent side="right">{theme === "dark" ? "وضع نهاري" : "وضع ليلي"}</TooltipContent>
+            <TooltipContent side="right">{theme === "dark" ? t("nav", "lightMode") : t("nav", "darkMode")}</TooltipContent>
           </Tooltip>
         ) : (
           <button
@@ -239,7 +245,7 @@ export default function ClinicLayout({ children }: ClinicLayoutProps) {
             className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-muted hover:text-sidebar-foreground transition-colors"
           >
             {theme === "dark" ? <Sun className="w-4 h-4 flex-shrink-0" /> : <Moon className="w-4 h-4 flex-shrink-0" />}
-            <span>{theme === "dark" ? "وضع نهاري" : "وضع ليلي"}</span>
+            <span>{theme === "dark" ? t("nav", "lightMode") : t("nav", "darkMode")}</span>
           </button>
         )}
       </div>
@@ -270,11 +276,11 @@ export default function ClinicLayout({ children }: ClinicLayoutProps) {
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/settings"><span className="flex items-center gap-2 cursor-pointer"><Settings className="w-4 h-4" /> الإعدادات</span></Link>
+              <Link href="/settings"><span className="flex items-center gap-2 cursor-pointer"><Settings className="w-4 h-4" /> {t("nav", "settings")}</span></Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive cursor-pointer">
-              <LogOut className="w-4 h-4 mr-2" /> تسجيل الخروج
+              <LogOut className="w-4 h-4 mr-2" /> {t("nav", "logout")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

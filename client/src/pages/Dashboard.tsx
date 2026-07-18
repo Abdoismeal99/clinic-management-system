@@ -12,6 +12,7 @@ import {
   Tooltip, ResponsiveContainer, Legend
 } from "recharts";
 import { STATUS_CLASSES, STATUS_LABELS } from "@/lib/types";
+import { useT } from "@/contexts/SettingsContext";
 
 function StatCard({ title, value, icon: Icon, color, subtitle }: {
   title: string; value: number | string; icon: any; color: string; subtitle?: string;
@@ -36,6 +37,7 @@ function StatCard({ title, value, icon: Icon, color, subtitle }: {
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { t } = useT();
   const { data: stats, isLoading } = trpc.dashboard.stats.useQuery();
 
   const chartData = (() => {
@@ -54,26 +56,26 @@ export default function Dashboard() {
     })).slice(-6);
   })();
 
-  const ACTION_LABELS: Record<string, string> = {
-    patient_created: "تم إضافة مريض",
-    patient_updated: "تم تحديث بيانات مريض",
-    patient_deleted: "تم أرشفة مريض",
-    patient_restored: "تم استعادة مريض",
-    visit_created: "تم إضافة زيارة",
-    visit_updated: "تم تحديث زيارة",
-    prescription_created: "تم إنشاء وصفة طبية",
-    file_uploaded: "تم رفع ملف",
-    appointment_created: "تم جدولة موعد",
-    appointment_updated: "تم تحديث موعد",
+  const ACTION_LABELS: Record<string, { ar: string; en: string }> = {
+    patient_created: { ar: "تم إضافة مريض", en: "Patient added" },
+    patient_updated: { ar: "تم تحديث بيانات مريض", en: "Patient updated" },
+    patient_deleted: { ar: "تم أرشفة مريض", en: "Patient archived" },
+    patient_restored: { ar: "تم استعادة مريض", en: "Patient restored" },
+    visit_created: { ar: "تم إضافة زيارة", en: "Visit added" },
+    visit_updated: { ar: "تم تحديث زيارة", en: "Visit updated" },
+    prescription_created: { ar: "تم إنشاء وصفة طبية", en: "Prescription created" },
+    file_uploaded: { ar: "تم رفع ملف", en: "File uploaded" },
+    appointment_created: { ar: "تم جدولة موعد", en: "Appointment scheduled" },
+    appointment_updated: { ar: "تم تحديث موعد", en: "Appointment updated" },
   };
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground">لوحة التحكم</h1>
+        <h1 className="text-2xl font-bold text-foreground">{t("dashboard", "title")}</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          أهلاً بعودتك، {user?.name ?? "دكتور"} · {format(new Date(), "EEEE, MMMM d, yyyy")}
+          {t("dashboard", "welcome")}، {user?.name ?? t("visits", "doctor")} · {format(new Date(), "EEEE, MMMM d, yyyy")}
         </p>
       </div>
 
@@ -84,10 +86,10 @@ export default function Dashboard() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="إجمالي المرضى" value={stats?.patientCount ?? 0} icon={Users} color="bg-blue-50 text-blue-600" subtitle="سجلات نشطة" />
-          <StatCard title="مواعيد اليوم" value={stats?.todayAppts ?? 0} icon={Calendar} color="bg-green-50 text-green-600" subtitle="مجدولة اليوم" />
-          <StatCard title="متابعة مطلوبة" value={stats?.followUps?.length ?? 0} icon={AlertCircle} color="bg-amber-50 text-amber-600" subtitle="خلال 7 أيام" />
-          <StatCard title="زيارات حديثة" value={stats?.recentVisits?.length ?? 0} icon={Stethoscope} color="bg-purple-50 text-purple-600" subtitle="آخر 5 زيارات" />
+          <StatCard title={t("dashboard", "totalPatients")} value={stats?.patientCount ?? 0} icon={Users} color="bg-blue-50 text-blue-600" />
+          <StatCard title={t("dashboard", "todayAppointments")} value={stats?.todayAppts ?? 0} icon={Calendar} color="bg-green-50 text-green-600" />
+          <StatCard title={t("dashboard", "followUpReminders")} value={stats?.followUps?.length ?? 0} icon={AlertCircle} color="bg-amber-50 text-amber-600" />
+          <StatCard title={t("dashboard", "recentVisits")} value={stats?.recentVisits?.length ?? 0} icon={Stethoscope} color="bg-purple-50 text-purple-600" />
         </div>
       )}
 
@@ -97,7 +99,7 @@ export default function Dashboard() {
         <Card className="lg:col-span-2">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-primary" /> إحصائيات شهرية
+              <TrendingUp className="w-4 h-4 text-primary" /> {t("dashboard", "monthlyStats")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -119,8 +121,8 @@ export default function Dashboard() {
                   <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                   <Tooltip contentStyle={{ borderRadius: "8px", border: "1px solid #e5e7eb", fontSize: "12px" }} />
                   <Legend wrapperStyle={{ fontSize: "12px" }} />
-                  <Area type="monotone" dataKey="patients" stroke="#3B82F6" strokeWidth={2} fill="url(#colorPatients)" name="مرضى جدد" />
-                  <Area type="monotone" dataKey="visits" stroke="#10B981" strokeWidth={2} fill="url(#colorVisits)" name="زيارات" />
+                  <Area type="monotone" dataKey="patients" stroke="#3B82F6" strokeWidth={2} fill="url(#colorPatients)" name={t("dashboard", "newPatientsMonth")} />
+                  <Area type="monotone" dataKey="visits" stroke="#10B981" strokeWidth={2} fill="url(#colorVisits)" name={t("dashboard", "visitsMonth")} />
                 </AreaChart>
               </ResponsiveContainer>
             )}
@@ -131,7 +133,7 @@ export default function Dashboard() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Clock className="w-4 h-4 text-amber-500" /> تذكيرات المتابعة
+              <Clock className="w-4 h-4 text-amber-500" /> {t("dashboard", "followUpReminders")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -165,11 +167,11 @@ export default function Dashboard() {
         <Card>
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Users className="w-4 h-4 text-primary" /> آخر المرضى
+              <Users className="w-4 h-4 text-primary" /> {t("dashboard", "recentPatients")}
             </CardTitle>
             <Link href="/patients">
               <Button variant="ghost" size="sm" className="text-xs h-7 gap-1">
-                عرض الكل <ChevronRight className="w-3 h-3" />
+                {t("dashboard", "viewAll")} <ChevronRight className="w-3 h-3" />
               </Button>
             </Link>
           </CardHeader>
@@ -210,11 +212,11 @@ export default function Dashboard() {
         <Card>
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Activity className="w-4 h-4 text-primary" /> آخر النشاط
+              <Activity className="w-4 h-4 text-primary" /> {t("dashboard", "latestActivity")}
             </CardTitle>
             <Link href="/activity">
               <Button variant="ghost" size="sm" className="text-xs h-7 gap-1">
-                عرض الكل <ChevronRight className="w-3 h-3" />
+                {t("dashboard", "viewAll")} <ChevronRight className="w-3 h-3" />
               </Button>
             </Link>
           </CardHeader>
@@ -232,7 +234,7 @@ export default function Dashboard() {
                   <div key={a.id} className="flex items-start gap-3 py-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm text-foreground">{ACTION_LABELS[a.action] ?? a.action}</p>
+                      <p className="text-sm text-foreground">{(ACTION_LABELS[a.action] as any)?.[t("common", "lang")] ?? ACTION_LABELS[a.action]?.ar ?? a.action}</p>
                       <p className="text-xs text-muted-foreground truncate">{a.description}</p>
                     </div>
                     <span className="text-xs text-muted-foreground flex-shrink-0 whitespace-nowrap">

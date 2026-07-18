@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Send, Bot, User, Sparkles, RotateCcw, Lightbulb } from "lucide-react";
+import { useT } from "@/contexts/SettingsContext";
 
 type Message = { role: "user" | "assistant"; content: string };
 
@@ -57,6 +58,7 @@ function TypingIndicator() {
 }
 
 export default function AIAssistant() {
+  const { t } = useT();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -112,13 +114,13 @@ export default function AIAssistant() {
             <Sparkles className="w-5 h-5 text-emerald-600" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-foreground">المساعد الذكي</h1>
-            <p className="text-xs text-muted-foreground">يعرف بيانات عيادتك ويجاوبك بالعربي</p>
+            <h1 className="text-xl font-bold text-foreground">{t("ai", "title")}</h1>
+            <p className="text-xs text-muted-foreground">{t("ai", "subtitle")}</p>
           </div>
         </div>
         {messages.length > 0 && (
           <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground" onClick={clearChat}>
-            <RotateCcw className="w-3.5 h-3.5" /> محادثة جديدة
+            <RotateCcw className="w-3.5 h-3.5" /> {t("ai", "newChat")}
           </Button>
         )}
       </div>
@@ -140,7 +142,7 @@ export default function AIAssistant() {
               <div className="w-full max-w-md">
                 <div className="flex items-center gap-2 mb-3 text-xs text-muted-foreground">
                   <Lightbulb className="w-3.5 h-3.5" />
-                  <span>أسئلة مقترحة</span>
+                  <span>{t("ai", "suggestedQuestions") ?? "أسئلة مقترحة"}</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {QUICK_QUESTIONS.map((q) => (
@@ -174,7 +176,7 @@ export default function AIAssistant() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="اكتب سؤالك هنا... (مثلاً: طلعلي رقم محمد أحمد)"
+            placeholder={t("ai", "placeholder")}
             className="resize-none min-h-[48px] max-h-[120px] pl-3 pr-4 py-3 rounded-xl text-sm"
             rows={1}
             disabled={chatMutation.isPending}

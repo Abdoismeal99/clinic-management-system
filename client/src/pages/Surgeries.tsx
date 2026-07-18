@@ -12,6 +12,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/com
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Stethoscope, Search, Calendar, User, Filter, X } from "lucide-react";
+import { useT } from "@/contexts/SettingsContext";
 
 const STATUS_LABELS: Record<string, string> = {
   scheduled: "مجدولة",
@@ -162,6 +163,7 @@ function SurgeryForm({
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function Surgeries() {
   const utils = trpc.useUtils();
+  const { t } = useT();
 
   const { data: surgeries, isLoading } = trpc.surgeries.list.useQuery();
   const { data: patients } = trpc.patients.list.useQuery({ page: 1, limit: 500 });
@@ -170,7 +172,7 @@ export default function Surgeries() {
 
   const createMutation = trpc.surgeries.create.useMutation({
     onSuccess: () => {
-      toast.success("تم إضافة العملية الجراحية");
+      toast.success(t("surgeries", "surgeryAdded"));
       utils.surgeries.list.invalidate();
       utils.surgeries.upcoming.invalidate();
       setShowAdd(false);
@@ -181,7 +183,7 @@ export default function Surgeries() {
 
   const updateMutation = trpc.surgeries.update.useMutation({
     onSuccess: () => {
-      toast.success("تم تحديث العملية");
+      toast.success(t("surgeries", "surgeryUpdated"));
       utils.surgeries.list.invalidate();
       utils.surgeries.upcoming.invalidate();
       setEditId(null);
@@ -191,7 +193,7 @@ export default function Surgeries() {
 
   const deleteMutation = trpc.surgeries.delete.useMutation({
     onSuccess: () => {
-      toast.success("تم حذف العملية");
+      toast.success(t("surgeries", "surgeryDeleted"));
       utils.surgeries.list.invalidate();
       utils.surgeries.upcoming.invalidate();
       setDeleteId(null);
@@ -225,7 +227,7 @@ export default function Surgeries() {
   const handleCreate = () => {
     const dateOnly = form.surgeryDate?.slice(0, 10) || "";
     if (!form.patientId || !form.doctorId || !form.surgeryTypeId || !dateOnly) {
-      toast.error("يرجى تعبئة الحقول المطلوبة: المريض، نوع العملية، الطبيب، وتاريخ العملية");
+      toast.error(t("surgeries", "requiredFields"));
       return;
     }
     createMutation.mutate({
@@ -457,16 +459,16 @@ export default function Surgeries() {
       <AlertDialog open={deleteId !== null} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>حذف العملية الجراحية</AlertDialogTitle>
-            <AlertDialogDescription>هل أنت متأكد من حذف هذه العملية؟ لا يمكن التراجع عن هذا الإجراء.</AlertDialogDescription>
+            <AlertDialogTitle>{t("surgeries", "deleteSurgeryTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("surgeries", "deleteSurgeryDesc")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogCancel>{t("common", "cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteId && deleteMutation.mutate({ id: deleteId })}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              حذف
+              {t("common", "delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

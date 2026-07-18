@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Download, FileText, TrendingUp, Users, Activity, Stethoscope, Printer, Sparkles, Loader2, RefreshCw, AlertTriangle, CheckCircle2, Brain } from "lucide-react";
+import { useT } from "@/contexts/SettingsContext";
 import { Streamdown } from 'streamdown';
 
 const COLORS = ["#2563eb", "#16a34a", "#d97706", "#dc2626", "#7c3aed", "#0891b2", "#be185d", "#065f46"];
@@ -24,6 +25,7 @@ function exportCSV(data: any[], filename: string) {
 }
 
 export default function Reports() {
+  const { t } = useT();
   const { data: monthlyPatients, isLoading: loadingMP } = trpc.reports.monthlyPatients.useQuery();
   const { data: monthlyVisits, isLoading: loadingMV } = trpc.reports.monthlyVisits.useQuery();
   const { data: topDiagnoses } = trpc.reports.topDiagnoses.useQuery({ limit: 10 });
@@ -46,12 +48,12 @@ export default function Reports() {
     <div className="p-6 space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">التقارير والإحصائيات</h1>
+          <h1 className="text-2xl font-bold text-foreground">{t("reports", "title")}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">إحصائيات العيادة والاتجاهات ومؤشرات الأداء</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" className="gap-2 h-9" onClick={() => window.print()}>
-            <Printer className="w-4 h-4" /> طباعة
+            <Printer className="w-4 h-4" /> {t("common", "print")}
           </Button>
         </div>
       </div>
@@ -76,11 +78,11 @@ export default function Reports() {
 
       <Tabs defaultValue="patients">
         <TabsList className="h-9">
-          <TabsTrigger value="patients" className="text-sm">المرضى</TabsTrigger>
-          <TabsTrigger value="visits" className="text-sm">الزيارات</TabsTrigger>
-          <TabsTrigger value="diagnoses" className="text-sm">التشخيصات</TabsTrigger>
-          <TabsTrigger value="doctors" className="text-sm">الأطباء</TabsTrigger>
-          <TabsTrigger value="ai" className="text-sm gap-1.5"><Sparkles className="w-3.5 h-3.5" />تحليل الذكاء الاصطناعي</TabsTrigger>
+          <TabsTrigger value="patients" className="text-sm">{t("reports", "patients")}</TabsTrigger>
+          <TabsTrigger value="visits" className="text-sm">{t("reports", "visits")}</TabsTrigger>
+          <TabsTrigger value="diagnoses" className="text-sm">{t("reports", "diagnosisStats")}</TabsTrigger>
+          <TabsTrigger value="doctors" className="text-sm">{t("reports", "doctorStats")}</TabsTrigger>
+          <TabsTrigger value="ai" className="text-sm gap-1.5"><Sparkles className="w-3.5 h-3.5" />{t("reports", "aiAnalysis")}</TabsTrigger>
         </TabsList>
 
         {/* Monthly Patients */}
