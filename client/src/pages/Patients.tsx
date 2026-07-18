@@ -250,6 +250,11 @@ export default function Patients() {
               <Label>الاسم الكامل <span className="text-destructive">*</span></Label>
               <Input value={form.fullName} onChange={e => setForm({ ...form, fullName: e.target.value })} placeholder="أدخل الاسم الكامل" />
             </div>
+            {/* رقم الهاتف */}
+            <div className="space-y-1.5">
+              <Label>رقم الهاتف</Label>
+              <Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="مثال: 0501234567" />
+            </div>
             {/* الجنس — ذكر / أنثى فقط */}
             <div className="space-y-1.5">
               <Label>الجنس</Label>

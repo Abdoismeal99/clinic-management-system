@@ -4,6 +4,7 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { SettingsProvider } from "./contexts/SettingsContext";
 import ClinicLayout from "./components/ClinicLayout";
 
 // Pages
@@ -71,13 +72,15 @@ function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light" switchable>
-        <TooltipProvider>
-          <Toaster position="top-right" richColors />
-          <Switch>
-            <Route path="/activate" component={ActivateRoute} />
-            <Route component={Router} />
-          </Switch>
-        </TooltipProvider>
+        <SettingsProvider>
+          <TooltipProvider>
+            <Toaster position="top-right" richColors />
+            <Switch>
+              <Route path="/activate" component={ActivateRoute} />
+              <Route component={Router} />
+            </Switch>
+          </TooltipProvider>
+        </SettingsProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );
