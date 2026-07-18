@@ -35,6 +35,7 @@ async function getAllClinicData(tenantId: number) {
     todayAppts,
     upcomingAppts,
     upcomingSurgs,
+    pastSurgs,
     totalPatients,
     newPatientsLast3Days,
     newPatientsLast7Days,
@@ -151,6 +152,25 @@ async function getAllClinicData(tenantId: number) {
       .orderBy(asc(surgeries.surgeryDate))
       .limit(10),
 
+    // Past surgeries (last 90 days)
+    db
+      .select({
+        id: surgeries.id,
+        patientName: patients.fullName,
+        doctorName: clinicDoctors.name,
+        surgeryTypeName: surgeryTypes.name,
+        surgeryDate: surgeries.surgeryDate,
+        status: surgeries.status,
+        notes: surgeries.notes,
+      })
+      .from(surgeries)
+      .leftJoin(patients, eq(surgeries.patientId, patients.id))
+      .leftJoin(clinicDoctors, eq(surgeries.doctorId, clinicDoctors.id))
+      .leftJoin(surgeryTypes, eq(surgeries.surgeryTypeId, surgeryTypes.id))
+      .where(and(eq(surgeries.tenantId, tenantId), lte(surgeries.surgeryDate, now)))
+      .orderBy(desc(surgeries.surgeryDate))
+      .limit(20),
+
     // Stats
     db.select({ cnt: count() }).from(patients).where(and(eq(patients.tenantId, tenantId), eq(patients.isDeleted, false))),
     db.select({ cnt: count() }).from(patients).where(and(eq(patients.tenantId, tenantId), eq(patients.isDeleted, false), gte(patients.createdAt, threeDaysAgo))),
@@ -171,6 +191,7 @@ async function getAllClinicData(tenantId: number) {
     todayAppts,
     upcomingAppts,
     upcomingSurgs,
+    pastSurgs,
     stats: {
       totalPatients: totalPatients[0]?.cnt ?? 0,
       newPatientsLast3Days: newPatientsLast3Days[0]?.cnt ?? 0,
@@ -182,6 +203,7 @@ async function getAllClinicData(tenantId: number) {
       todayAppointments: todayAppts.length,
       upcomingAppointments: upcomingAppts.length,
       upcomingSurgeries: upcomingSurgs.length,
+      pastSurgeries: pastSurgs.length,
     },
     clinicName: (clinicSettingsRows[0] as any)?.clinicName ?? "العيادة",
     currentDate: now.toLocaleDateString("ar-EG", { weekday: "long", year: "numeric", month: "long", day: "numeric" }),
@@ -243,7 +265,7 @@ async function getFullPatientData(patientDbId: number, tenantId: number) {
 // ─── Build system prompt ───────────────────────────────────────────────────────
 
 function buildSystemPrompt(data: NonNullable<Awaited<ReturnType<typeof getAllClinicData>>>) {
-  const { stats, currentDate, clinicName, allPatients, allDoctors, allSurgeryTypes, todayAppts, upcomingAppts, upcomingSurgs } = data;
+  const { stats, currentDate, clinicName, allPatients, allDoctors, allSurgeryTypes, todayAppts, upcomingAppts, upcomingSurgs, pastSurgs } = data;
 
   const patientsList = allPatients.length > 0
     ? allPatients.map(p =>
@@ -275,9 +297,15 @@ function buildSystemPrompt(data: NonNullable<Awaited<ReturnType<typeof getAllCli
 
   const upcomingSurgsList = upcomingSurgs.length > 0
     ? upcomingSurgs.map(s =>
-        `  • ${s.patientName ?? "—"} | التاريخ: ${s.surgeryDate ? new Date(s.surgeryDate).toLocaleDateString("ar-EG") : "—"} | نوع العملية: ${s.surgeryTypeName ?? "—"} | الطبيب: ${s.doctorName ?? "—"} | الحالة: ${s.status ?? "—"}`
+        `  • ${s.patientName ?? "—"} | التاريخ: ${s.surgeryDate ? new Date(s.surgeryDate).toLocaleDateString("ar-EG") : "—"} | نوع العملية: ${s.surgeryTypeName ?? "—"} | الطبيب: ${s.doctorName ?? "—"} | الحالة: ${s.status ?? "—"}${s.notes ? " | ملاحظات: " + s.notes : ""}`
       ).join("\n")
     : "  لا توجد عمليات جراحية قادمة";
+
+  const pastSurgsList = pastSurgs.length > 0
+    ? pastSurgs.map(s =>
+        `  • ${s.patientName ?? "—"} | التاريخ: ${s.surgeryDate ? new Date(s.surgeryDate).toLocaleDateString("ar-EG") : "—"} | نوع العملية: ${s.surgeryTypeName ?? "—"} | الطبيب: ${s.doctorName ?? "—"} | الحالة: ${s.status ?? "—"}${s.notes ? " | ملاحظات: " + s.notes : ""}`
+      ).join("\n")
+    : "  لا توجد عمليات جراحية سابقة مسجلة";
 
   return `أنت مساعد ذكي لعيادة "${clinicName}". اسمك "مساعد العيادة". تتحدث باللغة العربية دائماً وتجيب بشكل مختصر وواضح.
 لديك صلاحية الوصول الكامل لجميع بيانات العيادة الحقيقية المذكورة أدناه.
@@ -296,6 +324,7 @@ function buildSystemPrompt(data: NonNullable<Awaited<ReturnType<typeof getAllCli
 - مواعيد اليوم: ${stats.todayAppointments}
 - مواعيد قادمة (7 أيام): ${stats.upcomingAppointments}
 - عمليات قادمة: ${stats.upcomingSurgeries}
+- عمليات سابقة (90 يوم): ${stats.pastSurgeries}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 👨‍⚕️ **أطباء العيادة (${allDoctors.length} طبيب):**
@@ -314,8 +343,12 @@ ${todayApptsList}
 ${upcomingApptsList}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🏥 **العمليات الجراحية القادمة:**
+🏥 **العمليات الجراحية القادمة (${upcomingSurgs.length}):**
 ${upcomingSurgsList}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🏥 **العمليات الجراحية السابقة (${pastSurgs.length}):**
+${pastSurgsList}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🧑‍🤝‍🧑 **قائمة المرضى المسجلين (${allPatients.length} مريض):**
@@ -324,10 +357,14 @@ ${patientsList}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 **تعليمات:**
 - أجب فقط بناءً على البيانات المذكورة أعلاه.
-- إذا سُئلت عن مريض، ابحث في قائمة المرضى بالاسم أو جزء منه وأعطِ كل معلوماته.
+- أجب فقط بناءً على البيانات المذكورة أعلاه.
+- إذا سُئلت عن مريض، ابحث في قائمة المرضى بالاسم أو جزء منه وأعطِ كل معلوماته بما فيها العمليات الجراحية.
 - إذا سُئلت عن طبيب، ابحث في قائمة الأطباء وأعطِ كل معلوماته.
+- إذا سُئلت عن العمليات الجراحية (القادمة أو السابقة)، استخدم قائمتي العمليات القادمة والسابقة المذكورتين أعلاه.
+- إذا سُئلت عن أنواع العمليات المتاحة، استخدم قائمة أنواع العمليات.
 - لا تخترع أي معلومات غير موجودة في البيانات.
-- إذا لم تجد المعلومة، قل "لا توجد هذه المعلومة في النظام حالياً".`;
+- إذا لم تجد المعلومة، قل "لا توجد هذه المعلومة في النظام حالياً".
+- عند الإجابة عن العمليات، اذكر اسم المريض والطبيب والتاريخ والحالة والملاحظات إن وجدت.`;
 }
 
 // ─── Router ───────────────────────────────────────────────────────────────────
