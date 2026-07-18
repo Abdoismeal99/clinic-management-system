@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { linkedProcedure as protectedProcedure, router } from "../_core/trpc";
-import { invokeLLM } from "../_core/llm";
+import { ENV } from "../_core/env";
 import { getDb, getTenantId } from "../db";
 import {
   patients,
@@ -424,25 +424,33 @@ ${surgsText}`;
         }
       }
 
-      // 5. Call LLM
-      const result = await invokeLLM({
-        messages: [
-          { role: "system", content: systemPrompt + extraContext },
-          ...input.messages.map((m) => ({
-            role: m.role as "user" | "assistant",
-            content: m.content,
-          })),
-        ],
-        maxTokens: 1500,
+      // 5. Call OpenRouter — Gemini 2.5 Pro
+      const openRouterRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${ENV.openRouterApiKey}`,
+          "HTTP-Referer": "https://clinic-system.org",
+          "X-Title": "Clinic Management System",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-pro",
+          messages: [
+            { role: "system", content: systemPrompt + extraContext },
+            ...input.messages.map((m) => ({ role: m.role, content: m.content })),
+          ],
+          max_tokens: 1500,
+        }),
       });
 
-      const reply = result.choices[0]?.message?.content;
-      const text =
-        typeof reply === "string"
-          ? reply
-          : Array.isArray(reply)
-          ? reply.map((p: any) => p.text ?? "").join("")
-          : "عذراً، لم أتمكن من الإجابة.";
+      if (!openRouterRes.ok) {
+        const errText = await openRouterRes.text();
+        throw new Error(`OpenRouter error: ${openRouterRes.status} – ${errText}`);
+      }
+
+      const result = await openRouterRes.json() as any;
+      const reply = result.choices?.[0]?.message?.content;
+      const text = typeof reply === "string" ? reply : "عذراً، لم أتمكن من الإجابة.";
 
       return { reply: text };
     }),
