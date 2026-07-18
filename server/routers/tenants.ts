@@ -131,14 +131,17 @@ export const tenantsRouter = router({
       return { success: true };
     }),
 
-  // Delete tenant
+  // Delete tenant (suspend instead of hard delete to block users immediately)
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       assertAdmin(ctx.user?.email);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await db.delete(tenants).where(eq(tenants.id, input.id));
+      // Suspend instead of hard delete — this blocks all users linked to this tenant immediately
+      await db.update(tenants)
+        .set({ status: "suspended" })
+        .where(eq(tenants.id, input.id));
       return { success: true };
     }),
 
