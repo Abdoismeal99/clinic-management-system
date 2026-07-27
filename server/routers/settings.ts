@@ -155,7 +155,8 @@ export const usersRouter = router({
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await db.update(users).set({ tenantId: null, tenantRole: "staff" }).where(eq(users.id, input.userId));
+      // Hard delete the user so they need a new activation link to re-enter the system
+      await db.delete(users).where(eq(users.id, input.userId));
       return { success: true };
     }),
 });
