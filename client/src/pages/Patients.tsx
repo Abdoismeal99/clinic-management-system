@@ -29,6 +29,15 @@ const GENDER_LABELS_AR: Record<string, { ar: string; en: string }> = {
   female: { ar: "أنثى", en: "Female" },
   other: { ar: "آخر", en: "Other" },
 };
+
+// Platform badge colors and icons
+const PLATFORM_CONFIG: Record<string, { color: string; label: { ar: string; en: string }; icon: string }> = {
+  facebook: { color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400", label: { ar: "فيسبوك", en: "Facebook" }, icon: "f" },
+  instagram: { color: "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400", label: { ar: "إنستغرام", en: "Instagram" }, icon: "ig" },
+  whatsapp: { color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400", label: { ar: "واتساب", en: "WhatsApp" }, icon: "wa" },
+  manual: { color: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400", label: { ar: "يدوي", en: "Manual" }, icon: "✎" },
+};
+
 const EMPTY_FORM = {
   fullName: "", gender: "male" as const, dateOfBirth: "", phone: "",
   address: "", occupation: "", bloodType: "unknown" as const,
@@ -37,6 +46,17 @@ const EMPTY_FORM = {
   medicalNotes: "", tags: [] as string[], status: "new" as const,
 };
 
+function PlatformBadge({ platform, lang }: { platform?: string | null; lang: string }) {
+  const key = platform || "manual";
+  const config = PLATFORM_CONFIG[key] || PLATFORM_CONFIG.manual;
+  // Don't show badge for manual (it's the default, no need to clutter)
+  if (key === "manual") return null;
+  return (
+    <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium ${config.color}`}>
+      {(config.label as any)[lang]}
+    </span>
+  );
+}
 
 export default function Patients() {
   const { user } = useAuth();
@@ -45,6 +65,7 @@ export default function Patients() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [genderFilter, setGenderFilter] = useState("all");
+  const [platformFilter, setPlatformFilter] = useState("all");
   const [tagFilter, setTagFilter] = useState("");
   const [page, setPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
@@ -56,6 +77,7 @@ export default function Patients() {
     search: search || undefined,
     status: statusFilter !== "all" ? statusFilter : undefined,
     gender: genderFilter !== "all" ? genderFilter : undefined,
+    platform: platformFilter !== "all" ? platformFilter : undefined,
     tag: tagFilter || undefined,
     page, limit: 15,
   });
@@ -138,6 +160,17 @@ export default function Patients() {
                 <SelectItem value="female">{t("patients", "female")}</SelectItem>
               </SelectContent>
             </Select>
+            {/* Platform filter */}
+            <Select value={platformFilter} onValueChange={v => { setPlatformFilter(v); setPage(1); }}>
+              <SelectTrigger className="w-36"><SelectValue placeholder={t("patients", "platform")} /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("patients", "allPlatforms")}</SelectItem>
+                <SelectItem value="facebook">{t("patients", "platformFacebook")}</SelectItem>
+                <SelectItem value="instagram">{t("patients", "platformInstagram")}</SelectItem>
+                <SelectItem value="whatsapp">{t("patients", "platformWhatsapp")}</SelectItem>
+                <SelectItem value="manual">{t("patients", "platformManual")}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           {allTags.length > 0 && (
             <div className="flex flex-wrap gap-2 items-center">
@@ -177,6 +210,7 @@ export default function Patients() {
                     <th className="text-right px-4 py-3 font-medium hidden sm:table-cell">{t("patients", "patientId")}</th>
                     <th className="text-right px-4 py-3 font-medium hidden md:table-cell">{t("patients", "genderAge")}</th>
                     <th className="text-right px-4 py-3 font-medium hidden lg:table-cell">{t("patients", "phone")}</th>
+                    <th className="text-right px-4 py-3 font-medium hidden xl:table-cell">{t("patients", "platform")}</th>
                     <th className="text-right px-4 py-3 font-medium">{t("patients", "tags")}</th>
                     <th className="text-right px-4 py-3 font-medium">{t("patients", "status")}</th>
                     <th className="text-right px-4 py-3 font-medium">{t("common", "actions")}</th>
@@ -193,7 +227,15 @@ export default function Patients() {
                             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-xs shrink-0">
                               {p.fullName.charAt(0)}
                             </div>
-                            <span className="font-medium text-foreground">{p.fullName}</span>
+                            <div>
+                              <span className="font-medium text-foreground">{p.fullName}</span>
+                              {/* Show platform badge inline on small screens */}
+                              {p.platform && p.platform !== "manual" && (
+                                <div className="xl:hidden mt-0.5">
+                                  <PlatformBadge platform={p.platform} lang={lang} />
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </td>
                         <td className="px-4 py-3 hidden sm:table-cell text-muted-foreground font-mono text-xs">{p.patientId}</td>
@@ -201,6 +243,12 @@ export default function Patients() {
                           {(GENDER_LABELS_AR[p.gender] as any)?.[lang] ?? p.gender}{age !== null ? ` · ${age} ${t("patients", "years")}` : ""}
                         </td>
                         <td className="px-4 py-3 hidden lg:table-cell text-muted-foreground">{p.phone ?? "—"}</td>
+                        <td className="px-4 py-3 hidden xl:table-cell">
+                          <PlatformBadge platform={p.platform} lang={lang} />
+                          {(!p.platform || p.platform === "manual") && (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </td>
                         <td className="px-4 py-3">
                           <div className="flex flex-wrap gap-1">
                             {tags.slice(0, 3).map((tag: string) => (

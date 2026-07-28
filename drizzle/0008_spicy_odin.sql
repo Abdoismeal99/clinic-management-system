@@ -1,0 +1,2 @@
+ALTER TABLE `patients` ADD `platform` enum('facebook','instagram','whatsapp','manual') DEFAULT 'manual';--> statement-breakpoint
+ALTER TABLE `patients` ADD `source` enum('bot','manual') DEFAULT 'manual';

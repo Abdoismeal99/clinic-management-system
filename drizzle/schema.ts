@@ -54,6 +54,9 @@ export const patients = mysqlTable("patients", {
   emergencyContactRelation: varchar("emergencyContactRelation", { length: 64 }),
   medicalNotes: text("medicalNotes"),
   tags: text("tags"), // JSON array of tag strings e.g. '["سكري","ضغط"]'
+  // Bot integration fields
+  platform: mysqlEnum("platform", ["facebook", "instagram", "whatsapp", "manual"]).default("manual"),
+  source: mysqlEnum("source", ["bot", "manual"]).default("manual"),
   status: mysqlEnum("status", ["new", "follow-up", "stable", "critical"]).default("new").notNull(),
   isDeleted: boolean("isDeleted").default(false).notNull(),
   deletedAt: timestamp("deletedAt"),

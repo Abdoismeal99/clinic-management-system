@@ -166,3 +166,11 @@
 - [x] تطبيق الترجمة على الشريط الجانبي والتنقل
 - [x] تطبيق الترجمة على لوحة التحكم والمرضى والزيارات والوصفات
 - [x] تطبيق الترجمة على المواعيد والعمليات والتقارير والإعدادات وباقي الصفحات
+
+## ربط n8n Bot بالسيستم (Round 8)
+
+- [x] إضافة حقل platform (facebook/instagram/whatsapp/manual) وsource (bot/manual) لجدول patients
+- [x] إنشاء Public API endpoint: POST /api/public/patients بـ API Key
+- [x] إضافة GET /api/public/patients للبحث من n8n
+- [x] إضافة فلتر المنصة في صفحة المرضى مع badge لكل منصة
+- [x] نشر على VPS وتوفير دليل الربط مع n8n

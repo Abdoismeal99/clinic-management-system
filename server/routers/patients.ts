@@ -33,6 +33,7 @@ export const patientsRouter = router({
       status: z.string().optional(),
       gender: z.string().optional(),
       tag: z.string().optional(),
+      platform: z.string().optional(),
       isDeleted: z.boolean().optional(),
       page: z.number().optional(),
       limit: z.number().optional(),

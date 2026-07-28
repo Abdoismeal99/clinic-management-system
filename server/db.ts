@@ -164,12 +164,12 @@ export async function createPatient(data: Omit<typeof patients.$inferInsert, "id
 }
 
 export async function getPatients(opts: {
-  search?: string; status?: string; gender?: string; tag?: string; isDeleted?: boolean;
+  search?: string; status?: string; gender?: string; tag?: string; platform?: string; isDeleted?: boolean;
   page?: number; limit?: number; doctorId?: number; tenantId?: number;
 }): Promise<{ data: Patient[]; total: number }> {
   const db = await getDb();
   if (!db) return { data: [], total: 0 };
-  const { search, status, gender, tag, isDeleted = false, page = 1, limit = 20, tenantId } = opts;
+  const { search, status, gender, tag, platform, isDeleted = false, page = 1, limit = 20, tenantId } = opts;
   const conditions = [eq(patients.isDeleted, isDeleted)];
   if (tenantId) conditions.push(eq(patients.tenantId, tenantId));
   if (search) {
@@ -182,6 +182,7 @@ export async function getPatients(opts: {
   if (status) conditions.push(eq(patients.status, status as any));
   if (gender) conditions.push(eq(patients.gender, gender as any));
   if (tag) conditions.push(like(patients.tags, `%${tag}%`));
+  if (platform) conditions.push(eq(patients.platform, platform as any));
 
   const where = and(...conditions);
   const [data, totalResult] = await Promise.all([

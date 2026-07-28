@@ -141,6 +141,28 @@ export const translations = {
     archivedPatients: { ar: "المرضى المؤرشفون", en: "Archived Patients" },
     unknown: { ar: "غير معروف", en: "Unknown" },
     years: { ar: "سنة", en: "years" },
+    // Keys used in Patients.tsx page
+    newPatient: { ar: "مريض جديد", en: "New Patient" },
+    totalPatients: { ar: "مريض", en: "patients" },
+    patient: { ar: "المريض", en: "Patient" },
+    genderAge: { ar: "الجنس / العمر", en: "Gender / Age" },
+    male: { ar: "ذكر", en: "Male" },
+    female: { ar: "أنثى", en: "Female" },
+    allStatuses: { ar: "جميع الحالات", en: "All Statuses" },
+    archivePatient: { ar: "أرشفة المريض", en: "Archive Patient" },
+    fullNamePlaceholder: { ar: "أدخل الاسم الكامل", en: "Enter full name" },
+    chronicDiseasesPlaceholder: { ar: "مثال: سكري، ضغط", en: "e.g. Diabetes, Hypertension" },
+    medicalNotesPlaceholder: { ar: "أي ملاحظات طبية...", en: "Any medical notes..." },
+    tagsPlaceholder: { ar: "أضف تاج واضغط Enter", en: "Add tag and press Enter" },
+    // Platform / source (bot integration)
+    platform: { ar: "المنصة", en: "Platform" },
+    allPlatforms: { ar: "جميع المنصات", en: "All Platforms" },
+    platformFacebook: { ar: "فيسبوك", en: "Facebook" },
+    platformInstagram: { ar: "إنستغرام", en: "Instagram" },
+    platformWhatsapp: { ar: "واتساب", en: "WhatsApp" },
+    platformManual: { ar: "يدوي", en: "Manual" },
+    sourceBot: { ar: "بوت", en: "Bot" },
+    sourceManual: { ar: "يدوي", en: "Manual" },
   },
 
   // ─── Visits ─────────────────────────────────────────────────────────────────
