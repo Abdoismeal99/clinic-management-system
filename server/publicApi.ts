@@ -1,57 +1,76 @@
 /**
- * Public REST API for n8n bot integration
- * Allows external bots (Facebook/Instagram/WhatsApp) to register patients
- * and search for existing patients using an API key.
+ * Public REST API for n8n bot integration — v2.0 (per-tenant API keys)
+ *
+ * Each tenant (doctor/clinic) has their own botApiKey stored in the tenants table.
+ * Pass the key in the X-Api-Key header. The tenantId is resolved automatically.
  *
  * Endpoints:
- *   POST /api/public/patients  - Create a new patient from bot
+ *   GET  /api/public/health    - Health check (no auth)
+ *   POST /api/public/patients  - Register a new patient from bot
  *   GET  /api/public/patients  - Search patients by name or phone
  */
-
 import { Express, Request, Response } from "express";
-import { createPatient, generatePatientId, getPatients } from "./db";
-import { getDb } from "./db";
+import { createPatient, generatePatientId, getPatients, getDb } from "./db";
 import { tenants } from "../drizzle/schema";
+import { eq } from "drizzle-orm";
 
-// ─── API Key Authentication ───────────────────────────────────────────────────
-// The API key is stored as BOT_API_KEY env variable.
-// Each tenant can have their own API key stored in the tenants table (botApiKey column),
-// but for simplicity we use a global key from env. The tenantId is passed in the request body.
-function getBotApiKey(): string {
-  return process.env.BOT_API_KEY || "clinic-bot-api-key-2026";
+// ─── Per-Tenant API Key Auth ──────────────────────────────────────────────────
+async function resolveTenantByApiKey(
+  apiKey: string
+): Promise<{ id: number; clinicName: string } | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db
+    .select({ id: tenants.id, clinicName: tenants.clinicName })
+    .from(tenants)
+    .where(eq(tenants.botApiKey, apiKey))
+    .limit(1);
+  return result[0] ?? null;
 }
 
-function authenticateApiKey(req: Request, res: Response): boolean {
+async function authenticateAndGetTenant(
+  req: Request,
+  res: Response
+): Promise<{ id: number; clinicName: string } | null> {
   const apiKey =
-    req.headers["x-api-key"] ||
-    req.headers["authorization"]?.replace("Bearer ", "");
+    (req.headers["x-api-key"] as string) ||
+    (req.headers["authorization"] as string)?.replace(/^Bearer\s+/i, "");
 
-  if (!apiKey || apiKey !== getBotApiKey()) {
+  if (!apiKey) {
     res.status(401).json({
       success: false,
-      error: "Unauthorized: Invalid or missing API key",
+      error: "Missing API key. Pass it in the X-Api-Key header.",
     });
-    return false;
+    return null;
   }
-  return true;
+
+  const tenant = await resolveTenantByApiKey(apiKey.trim());
+  if (!tenant) {
+    res.status(401).json({ success: false, error: "Invalid API key." });
+    return null;
+  }
+  return tenant;
 }
 
 // ─── Route Handlers ───────────────────────────────────────────────────────────
 
 /**
  * POST /api/public/patients
- * Create a new patient from an external bot.
+ * Register a new patient from an n8n bot.
  *
- * Body:
+ * Headers:
+ *   X-Api-Key: <your clinic bot API key>
+ *
+ * Body (JSON):
  *   name     (required) - Patient full name
  *   phone    (optional) - Patient phone number
- *   platform (optional) - facebook | instagram | whatsapp | manual (default: manual)
- *   gender   (optional) - male | female | other (default: other)
+ *   platform (optional) - facebook | instagram | whatsapp | manual  (default: manual)
+ *   gender   (optional) - male | female | other  (default: other)
  *   notes    (optional) - Medical notes
- *   tenantId (optional) - Tenant ID (default: 1)
  */
 async function createPatientHandler(req: Request, res: Response) {
-  if (!authenticateApiKey(req, res)) return;
+  const tenant = await authenticateAndGetTenant(req, res);
+  if (!tenant) return;
 
   try {
     const {
@@ -60,10 +79,8 @@ async function createPatientHandler(req: Request, res: Response) {
       platform = "manual",
       gender = "other",
       notes,
-      tenantId = 1,
     } = req.body;
 
-    // Validate required fields
     if (!name || typeof name !== "string" || name.trim().length === 0) {
       return res.status(400).json({
         success: false,
@@ -71,21 +88,16 @@ async function createPatientHandler(req: Request, res: Response) {
       });
     }
 
-    // Validate platform
     const validPlatforms = ["facebook", "instagram", "whatsapp", "manual"];
-    const normalizedPlatform = validPlatforms.includes(platform)
-      ? platform
-      : "manual";
-
-    // Validate gender
+    const normalizedPlatform = validPlatforms.includes(platform) ? platform : "manual";
     const validGenders = ["male", "female", "other"];
     const normalizedGender = validGenders.includes(gender) ? gender : "other";
 
-    // Check if patient with same phone already exists (avoid duplicates)
+    // Deduplicate by phone within this tenant
     if (phone && typeof phone === "string" && phone.trim().length > 0) {
       const existing = await getPatients({
         search: phone.trim(),
-        tenantId: Number(tenantId),
+        tenantId: tenant.id,
         limit: 1,
       });
       if (existing.data.length > 0) {
@@ -107,12 +119,9 @@ async function createPatientHandler(req: Request, res: Response) {
       }
     }
 
-    // Generate patient ID
     const patientId = await generatePatientId();
-
-    // Create the patient
     const newId = await createPatient({
-      tenantId: Number(tenantId),
+      tenantId: tenant.id,
       patientId,
       fullName: name.trim(),
       phone: phone?.trim() || null,
@@ -135,44 +144,40 @@ async function createPatientHandler(req: Request, res: Response) {
         phone: phone?.trim() || null,
         platform: normalizedPlatform,
         source: "bot",
+        tenantId: tenant.id,
+        clinicName: tenant.clinicName,
       },
     });
   } catch (error: any) {
     console.error("[PublicAPI] Error creating patient:", error);
-    return res.status(500).json({
-      success: false,
-      error: "Internal server error",
-    });
+    return res.status(500).json({ success: false, error: "Internal server error" });
   }
 }
 
 /**
  * GET /api/public/patients
- * Search for patients by name or phone.
+ * Search patients belonging to the authenticated tenant.
+ *
+ * Headers:
+ *   X-Api-Key: <your clinic bot API key>
  *
  * Query params:
- *   search   (optional) - Search term (name or phone)
- *   phone    (optional) - Exact phone search
- *   tenantId (optional) - Tenant ID (default: 1)
- *   limit    (optional) - Max results (default: 10, max: 50)
+ *   search  (optional) - Search by name or phone
+ *   phone   (optional) - Exact phone search
+ *   limit   (optional) - Max results (default: 10, max: 50)
  */
 async function searchPatientsHandler(req: Request, res: Response) {
-  if (!authenticateApiKey(req, res)) return;
+  const tenant = await authenticateAndGetTenant(req, res);
+  if (!tenant) return;
 
   try {
-    const {
-      search,
-      phone,
-      tenantId = 1,
-      limit = 10,
-    } = req.query;
-
+    const { search, phone, limit = 10 } = req.query;
     const searchTerm = (search as string) || (phone as string) || "";
     const limitNum = Math.min(Number(limit) || 10, 50);
 
     const result = await getPatients({
       search: searchTerm,
-      tenantId: Number(tenantId),
+      tenantId: tenant.id,
       limit: limitNum,
       page: 1,
     });
@@ -180,6 +185,8 @@ async function searchPatientsHandler(req: Request, res: Response) {
     return res.status(200).json({
       success: true,
       total: result.total,
+      tenantId: tenant.id,
+      clinicName: tenant.clinicName,
       patients: result.data.map((p) => ({
         id: p.id,
         patientId: p.patientId,
@@ -194,22 +201,19 @@ async function searchPatientsHandler(req: Request, res: Response) {
     });
   } catch (error: any) {
     console.error("[PublicAPI] Error searching patients:", error);
-    return res.status(500).json({
-      success: false,
-      error: "Internal server error",
-    });
+    return res.status(500).json({ success: false, error: "Internal server error" });
   }
 }
 
 /**
  * GET /api/public/health
- * Health check endpoint (no auth required)
+ * Health check (no auth required)
  */
 function healthHandler(_req: Request, res: Response) {
   res.status(200).json({
     success: true,
     service: "Clinic Management System - Public API",
-    version: "1.0.0",
+    version: "2.0.0",
     timestamp: new Date().toISOString(),
   });
 }
@@ -219,6 +223,5 @@ export function registerPublicApi(app: Express) {
   app.get("/api/public/health", healthHandler);
   app.post("/api/public/patients", createPatientHandler);
   app.get("/api/public/patients", searchPatientsHandler);
-
-  console.log("[PublicAPI] Routes registered: POST/GET /api/public/patients");
+  console.log("[PublicAPI] Routes registered: POST/GET /api/public/patients (per-tenant auth v2)");
 }

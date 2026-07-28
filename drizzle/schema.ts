@@ -324,6 +324,7 @@ export const tenants = mysqlTable("tenants", {
   activatedAt: timestamp("activatedAt"),
   expiresAt: timestamp("expiresAt"),
   notes: text("notes"),
+  botApiKey: varchar("botApiKey", { length: 64 }).unique(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (t) => [
