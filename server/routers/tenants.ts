@@ -293,6 +293,18 @@ export const tenantsRouter = router({
       return { success: true, emailId: emailResult.data?.id };
     }),
 
+  // Generate or regenerate bot API key for a tenant (admin only)
+  generateBotApiKey: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      assertAdmin(ctx.user?.email);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const newKey = "cln_" + crypto.randomBytes(24).toString("hex");
+      await db.update(tenants).set({ botApiKey: newKey }).where(eq(tenants.id, input.id));
+      return { botApiKey: newKey };
+    }),
+
   // Check if current user's email has an active subscription
   checkMySubscription: publicProcedure.query(async ({ ctx }) => {
     if (!ctx.user?.email) return null;

@@ -18,7 +18,7 @@ import {
 import { toast } from "sonner";
 import {
   Plus, Copy, RefreshCw, Trash2, Edit, ShieldOff, ShieldCheck,
-  Clock, CheckCircle, XCircle, AlertCircle, Users, Link as LinkIcon, Mail,
+  Clock, CheckCircle, XCircle, AlertCircle, Users, Link as LinkIcon, Mail, Key,
 } from "lucide-react";
 
 const ADMIN_EMAIL = "abdoismeal012@gmail.com";
@@ -68,6 +68,7 @@ type Tenant = {
   activatedAt?: Date | null;
   expiresAt?: Date | null;
   notes?: string | null;
+  botApiKey?: string | null;
   createdAt: Date;
 };
 
@@ -121,6 +122,18 @@ export default function AdminClients() {
 
   const sendEmailMutation = trpc.tenants.sendInvitationEmail.useMutation({
     onSuccess: () => toast.success("تم إرسال الدعوة بنجاح على الإيميل ✉️"),
+    onError: (e) => toast.error(e.message),
+  });
+
+  const [apiKeyDialog, setApiKeyDialog] = useState<{ tenantId: number; clinicName: string; key: string } | null>(null);
+
+  const genApiKeyMutation = trpc.tenants.generateBotApiKey.useMutation({
+    onSuccess: (data, variables) => {
+      const tenant = clients.find((c: Tenant) => c.id === variables.id);
+      setApiKeyDialog({ tenantId: variables.id, clinicName: tenant?.clinicName ?? "", key: data.botApiKey });
+      refetch();
+      toast.success("تم توليد مفتاح API بنجاح");
+    },
     onError: (e) => toast.error(e.message),
   });
 
@@ -250,6 +263,23 @@ export default function AdminClients() {
                         }}>
                         <Edit className="w-3.5 h-3.5" />
                       </Button>
+                      {/* Create / Regenerate API Key */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 gap-1 text-xs text-purple-600 border-purple-200 hover:bg-purple-50 hover:text-purple-700"
+                        disabled={genApiKeyMutation.isPending}
+                        onClick={() => {
+                          const label = c.botApiKey ? "إعادة توليد مفتاح API" : "توليد مفتاح API";
+                          if (!c.botApiKey || confirm(`سيتم إلغاء المفتاح القديم وتوليد جديد. هل أنت متأكد؟`)) {
+                            genApiKeyMutation.mutate({ id: c.id });
+                          }
+                        }}
+                        title={c.botApiKey ? "إعادة توليد مفتاح API" : "توليد مفتاح API"}
+                      >
+                        <Key className="w-3 h-3" />
+                        {c.botApiKey ? "API Key" : "إنشاء API Key"}
+                      </Button>
                       {/* Delete */}
                       <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" title="حذف"
                         onClick={() => { if (confirm("هل أنت متأكد من حذف هذا العميل؟")) deleteMutation.mutate({ id: c.id }); }}>
@@ -365,6 +395,36 @@ export default function AdminClients() {
             <Button onClick={() => updateMutation.mutate({ id: editTenant!.id, ...editForm })} disabled={updateMutation.isPending}>
               {updateMutation.isPending ? "جاري الحفظ..." : "حفظ التغييرات"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* API Key Dialog */}
+      <Dialog open={!!apiKeyDialog} onOpenChange={() => setApiKeyDialog(null)}>
+        <DialogContent className="max-w-lg" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Key className="w-5 h-5 text-purple-600" /> مفتاح API للبوت
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              مفتاح API لعيادة <strong>{apiKeyDialog?.clinicName}</strong>. ابعته للدكتور عشان يستخدمه في ربط البوت.
+            </p>
+            <div className="bg-muted rounded-lg p-3 break-all text-sm font-mono text-foreground border border-purple-200">
+              {apiKeyDialog?.key}
+            </div>
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800">
+              ⚠️ احفظ المفتاح ده دلوقتي — مش هيظهر تاني بعد ما تقفل النافذة دي.
+            </div>
+            <Button className="w-full gap-2 bg-purple-600 hover:bg-purple-700" onClick={() => {
+              navigator.clipboard.writeText(apiKeyDialog?.key ?? "").then(() => toast.success("تم نسخ المفتاح"));
+            }}>
+              <Copy className="w-4 h-4" /> نسخ المفتاح
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setApiKeyDialog(null)}>إغلاق</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
